@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-50: #eefaf3;
+  --color-brand-100: #d6f2e2;
+  --color-brand-200: #aee1c6;
+  --color-brand-300: #7fcaa8;
+  --color-brand-400: #52ac87;
+  --color-brand-500: #2f8f6c;
+  --color-brand-600: #217257;
+  --color-brand-700: #1c5a46;
+  --color-brand-800: #19483a;
+  --color-brand-900: #163c31;
+
+  --color-sand-50: #fafaf8;
+  --color-sand-100: #f5f4f0;
+  --color-sand-200: #e8e6de;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-sand-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+}

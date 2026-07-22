@@ -1,0 +1,16 @@
+{
+  "name": "TrailQuest",
+  "short_name": "TrailQuest",
+  "description": "Real-world treasure hunts powered by AI vision",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafaf8",
+  "theme_color": "#2f8f6c",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
