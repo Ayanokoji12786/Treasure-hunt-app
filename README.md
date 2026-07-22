@@ -18,7 +18,7 @@ Cloned from the original:
 
 Added on top:
 
-- **Real AI photo verification** via the Claude API (vision) instead of a placeholder — see [AI verification](#ai-photo-verification) below
+- **Real AI photo verification** via Groq's vision API instead of a placeholder — see [AI verification](#ai-photo-verification) below
 - **GPS proximity check** — shows how far you are from the clue's coordinates before you scan (advisory, not a hard gate, so it's still testable from a desk)
 - **Hint penalty & speed bonus scoring** — revealing the AI-verification description costs points; finishing fast earns a bonus
 - **Confetti + completion screen** with score and elapsed time
@@ -41,12 +41,12 @@ Open the printed localhost URL. Register an account (stored locally in your brow
 Without any configuration, "Scan Surroundings" auto-accepts every photo and shows a visible "AI verification disabled" notice — the app is fully playable either way. To turn on real verification:
 
 1. Copy `.env.example` to `.env`.
-2. Set `VITE_ANTHROPIC_API_KEY` to a key from [console.anthropic.com](https://console.anthropic.com/).
+2. Set `VITE_GROQ_API_KEY` to a key from [console.groq.com/keys](https://console.groq.com/keys).
 3. Restart `npm run dev`.
 
-`VITE_ANTHROPIC_MODEL` optionally overrides the model (defaults to `claude-opus-4-8`, which has vision support).
+`VITE_GROQ_MODEL` optionally overrides the model (defaults to `qwen/qwen3.6-27b`, Groq's vision-capable model).
 
-**Security note:** this calls the Claude API directly from the browser using the SDK's documented browser-prototyping header (`anthropic-dangerous-direct-browser-access`). That means your API key ships inside the client bundle and is visible to anyone who opens dev tools. That's fine for running this locally or sharing it with friends you trust; it is **not** safe for a publicly deployed multi-user app. For that, put a small backend/serverless function between the browser and the Anthropic API so the key never reaches the client.
+**Security note:** this calls Groq's API directly from the browser. That means your API key ships inside the client bundle and is visible to anyone who opens dev tools. That's fine for running this locally or sharing it with friends you trust; it is **not** safe for a publicly deployed multi-user app. For that, put a small backend/serverless function between the browser and Groq so the key never reaches the client.
 
 ## Architecture — the honest caveat
 

@@ -188,7 +188,7 @@ export function HuntDetail() {
             {geoError && <p>📡 Location unavailable ({geoError}) — you can still scan a photo.</p>}
             {!isAiVerificationEnabled && (
               <p className="mt-1 text-amber-600 dark:text-amber-400">
-                ⚠️ AI photo verification isn't configured — photos are auto-accepted. Add VITE_ANTHROPIC_API_KEY to enable it.
+                ⚠️ AI photo verification isn't configured — photos are auto-accepted. Add VITE_GROQ_API_KEY to enable it.
               </p>
             )}
           </div>

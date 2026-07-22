@@ -7,52 +7,38 @@ export interface VerifyResult {
   source: "ai" | "manual";
 }
 
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-const MODEL = (import.meta.env.VITE_ANTHROPIC_MODEL as string | undefined) ?? "claude-opus-4-8";
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
+const GROQ_MODEL = (import.meta.env.VITE_GROQ_MODEL as string | undefined) ?? "qwen/qwen3.6-27b";
 
-export const isAiVerificationEnabled = Boolean(API_KEY);
-
-function dataUrlToBase64(dataUrl: string): { mediaType: string; data: string } {
-  const match = dataUrl.match(/^data:(image\/[a-zA-Z+.-]+);base64,(.*)$/);
-  if (!match) throw new Error("Unsupported image format for verification.");
-  return { mediaType: match[1], data: match[2] };
-}
+export const isAiVerificationEnabled = Boolean(GROQ_API_KEY);
 
 export async function verifyPhoto(
   imageDataUrl: string,
   clue: Clue,
 ): Promise<VerifyResult> {
-  if (!API_KEY) {
+  if (!GROQ_API_KEY) {
     return {
       verified: true,
       confidence: 0,
       reasoning:
-        "AI verification is not configured (no VITE_ANTHROPIC_API_KEY set), so this photo was accepted automatically. Add an API key in .env to enable real photo verification.",
+        "AI verification is not configured (no VITE_GROQ_API_KEY set), so this photo was accepted automatically. Add an API key in .env to enable real photo verification.",
       source: "manual",
     };
   }
 
-  const { mediaType, data } = dataUrlToBase64(imageDataUrl);
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-api-key": API_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
+      authorization: `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 300,
+      model: GROQ_MODEL,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "user",
           content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: mediaType, data },
-            },
             {
               type: "text",
               text:
@@ -60,6 +46,10 @@ export async function verifyPhoto(
                 `Expected surroundings: ${clue.verificationDescription}\n\n` +
                 `Look at the attached photo. Does it plausibly show this location, based on the description? ` +
                 `Reply with strict JSON only, no other text: {"verified": boolean, "confidence": number between 0 and 1, "reasoning": "one short sentence"}`,
+            },
+            {
+              type: "image_url",
+              image_url: { url: imageDataUrl },
             },
           ],
         },
@@ -73,7 +63,7 @@ export async function verifyPhoto(
   }
 
   const json = await response.json();
-  const text: string = json.content?.[0]?.text ?? "{}";
+  const text: string = json.choices?.[0]?.message?.content ?? "{}";
   const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
 
   return {
