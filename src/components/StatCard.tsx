@@ -1,9 +1,11 @@
-export function StatCard({ icon, value, label }: { icon: string; value: number | string; label: string }) {
+import type { ReactNode } from "react";
+
+export function StatCard({ icon, value, label }: { icon: ReactNode; value: number | string; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-xl border border-sand-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-      <span className="text-2xl">{icon}</span>
-      <span className="text-xl font-semibold">{value}</span>
-      <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+    <div className="glass flex flex-col items-center gap-1 rounded-xl p-4">
+      <span className="text-gold-500">{icon}</span>
+      <span className="text-xl font-semibold text-slate-100">{value}</span>
+      <span className="text-xs text-slate-400">{label}</span>
     </div>
   );
 }

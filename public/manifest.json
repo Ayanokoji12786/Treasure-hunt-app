@@ -1,6 +1,6 @@
 {
-  "name": "TrailQuest",
-  "short_name": "TrailQuest",
+  "name": "Luma Hunt",
+  "short_name": "Luma Hunt",
   "description": "Real-world treasure hunts powered by AI vision",
   "start_url": "/",
   "display": "standalone",

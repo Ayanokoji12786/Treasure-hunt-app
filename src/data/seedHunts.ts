@@ -10,7 +10,7 @@ export const SEED_HUNTS: Hunt[] = [
     difficulty: "easy",
     coverImage: "https://picsum.photos/seed/campus-quest/800/450",
     creatorId: "seed",
-    creatorName: "TrailQuest Team",
+    creatorName: "Luma Hunt Team",
     status: "published",
     createdAt: new Date("2026-01-10").toISOString(),
     clues: [
@@ -52,7 +52,7 @@ export const SEED_HUNTS: Hunt[] = [
     difficulty: "hard",
     coverImage: "https://picsum.photos/seed/park-mystery/800/450",
     creatorId: "seed",
-    creatorName: "TrailQuest Team",
+    creatorName: "Luma Hunt Team",
     status: "published",
     createdAt: new Date("2026-01-12").toISOString(),
     clues: [
@@ -94,7 +94,7 @@ export const SEED_HUNTS: Hunt[] = [
     difficulty: "medium",
     coverImage: "https://picsum.photos/seed/downtown-heritage/800/450",
     creatorId: "seed",
-    creatorName: "TrailQuest Team",
+    creatorName: "Luma Hunt Team",
     status: "published",
     createdAt: new Date("2026-01-14").toISOString(),
     clues: [

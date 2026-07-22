@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import {
+  Camera,
+  Check,
+  Compass,
+  Download,
+  Lightbulb,
+  Link2,
+  Lock,
+  MapPin,
+  Radar,
+  Trophy,
+} from "lucide-react";
 import { useHuntStore } from "../store/huntStore";
 import { useAuthStore } from "../store/authStore";
 import { DifficultyBadge } from "../components/DifficultyBadge";
@@ -60,11 +72,7 @@ export function HuntDetail() {
   }, [participation?.status]);
 
   if (!hunt) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center text-neutral-500 dark:text-neutral-400">
-        Hunt not found.
-      </div>
-    );
+    return <div className="mx-auto max-w-2xl px-4 py-16 text-center text-slate-400">Hunt not found.</div>;
   }
 
   async function handleStart() {
@@ -104,7 +112,7 @@ export function HuntDetail() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <Link to="/explore" className="text-sm text-neutral-500 dark:text-neutral-400">
+      <Link to="/explore" className="text-sm text-slate-400">
         ← Back
       </Link>
 
@@ -113,23 +121,29 @@ export function HuntDetail() {
       </div>
 
       <div className="mt-4 flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-bold">{hunt.title}</h1>
+        <h1 className="text-2xl font-bold text-slate-100">{hunt.title}</h1>
         <DifficultyBadge difficulty={hunt.difficulty} />
       </div>
-      <p className="mt-1 text-neutral-500 dark:text-neutral-400">{hunt.description}</p>
-      <div className="mt-2 flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
-        <span>📍 {hunt.clues.length} clues</span>
-        <button onClick={() => setShowShare((v) => !v)} className="font-medium text-brand-600">
-          🔗 Share code: {hunt.code}
+      <p className="mt-1 text-slate-400">{hunt.description}</p>
+      <div className="mt-2 flex items-center gap-4 text-sm text-slate-400">
+        <span className="flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5 text-gold-500" strokeWidth={2} />
+          {hunt.clues.length} clues
+        </span>
+        <button onClick={() => setShowShare((v) => !v)} className="flex items-center gap-1 font-medium text-sky-400">
+          <Link2 className="h-3.5 w-3.5" strokeWidth={2} />
+          Share code: {hunt.code}
         </button>
       </div>
 
       {showShare && (
-        <div className="mt-3 flex items-center gap-4 rounded-xl border border-sand-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-          <QRCodeSVG value={joinUrl} size={96} />
+        <div className="glass mt-3 flex items-center gap-4 rounded-xl p-4">
+          <div className="rounded-lg bg-white p-2">
+            <QRCodeSVG value={joinUrl} size={96} />
+          </div>
           <div className="text-sm">
-            <p className="font-medium">Scan to join</p>
-            <p className="text-neutral-500 dark:text-neutral-400">Code: {hunt.code}</p>
+            <p className="font-medium text-slate-100">Scan to join</p>
+            <p className="text-slate-400">Code: {hunt.code}</p>
             <button
               onClick={() => {
                 const json = exportHunt(hunt.id);
@@ -141,54 +155,60 @@ export function HuntDetail() {
                 a.click();
                 URL.revokeObjectURL(url);
               }}
-              className="mt-2 text-brand-600"
+              className="mt-2 flex items-center gap-1 text-sky-400"
             >
-              ⬇️ Export hunt as JSON
+              <Download className="h-3.5 w-3.5" strokeWidth={2} />
+              Export hunt as JSON
             </button>
           </div>
         </div>
       )}
 
       {!participation && (
-        <button
-          onClick={handleStart}
-          disabled={starting}
-          className="mt-6 w-full rounded-lg bg-brand-600 py-3 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-        >
-          ▶ Start Hunt
+        <button onClick={handleStart} disabled={starting} className="btn-primary mt-6 w-full">
+          <Compass className="h-4 w-4" strokeWidth={2} />
+          Start Hunt
         </button>
       )}
 
       {participation?.status === "completed" && (
-        <div className="mt-6 rounded-2xl border border-brand-200 bg-brand-50 p-6 text-center dark:border-brand-900 dark:bg-brand-900/20">
-          <p className="text-3xl">🏆</p>
-          <h2 className="mt-2 text-xl font-bold">Hunt complete!</h2>
-          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
-            Score: <strong>{participation.score}</strong> · Time:{" "}
-            {participation.elapsedSeconds ? `${Math.floor(participation.elapsedSeconds / 60)}m ${participation.elapsedSeconds % 60}s` : "—"}
+        <div className="glass mt-6 rounded-2xl border-explorer-500/30 p-6 text-center">
+          <Trophy className="mx-auto h-9 w-9 text-gold-500" strokeWidth={1.75} />
+          <h2 className="mt-2 text-xl font-bold text-slate-100">Hunt complete!</h2>
+          <p className="mt-1 text-sm text-slate-300">
+            Score: <strong className="text-explorer-400">{participation.score}</strong> · Time:{" "}
+            {participation.elapsedSeconds
+              ? `${Math.floor(participation.elapsedSeconds / 60)}m ${participation.elapsedSeconds % 60}s`
+              : "—"}
           </p>
-          <Link to="/leaderboard" className="mt-4 inline-block text-sm font-medium text-brand-600">
+          <Link to="/leaderboard" className="mt-4 inline-block text-sm font-medium text-sky-400">
             View leaderboard →
           </Link>
         </div>
       )}
 
       {participation?.status === "in_progress" && currentClue && (
-        <div className="mt-6 rounded-2xl border border-sand-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-          <p className="text-sm font-medium">{currentClue.locationName}</p>
-          <p className="mt-2 text-neutral-600 dark:text-neutral-300">{currentClue.hint}</p>
+        <div className="glass mt-6 rounded-2xl p-5">
+          <p className="text-sm font-medium text-slate-100">{currentClue.locationName}</p>
+          <p className="mt-2 text-slate-300">{currentClue.hint}</p>
 
-          <div className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+          <div className="mt-3 space-y-1 text-xs text-slate-400">
             {distance !== null && (
-              <p>
-                📡 You're about {Math.round(distance)}m from this spot
+              <p className="flex items-start gap-1.5">
+                <Radar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" strokeWidth={2} />
+                You're about {Math.round(distance)}m from this spot
                 {distance > PROXIMITY_THRESHOLD_METERS && " — head closer before scanning for a better verification."}
               </p>
             )}
-            {geoError && <p>📡 Location unavailable ({geoError}) — you can still scan a photo.</p>}
+            {geoError && (
+              <p className="flex items-start gap-1.5">
+                <Radar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" strokeWidth={2} />
+                Location unavailable ({geoError}) — you can still scan a photo.
+              </p>
+            )}
             {!isAiVerificationEnabled && (
-              <p className="mt-1 text-amber-600 dark:text-amber-400">
-                ⚠️ AI photo verification isn't configured — photos are auto-accepted. Add VITE_GROQ_API_KEY to enable it.
+              <p className="mt-1 text-gold-400">
+                ⚠ AI photo verification isn't configured — photos are auto-accepted. Add VITE_GROQ_API_KEY to enable it.
               </p>
             )}
           </div>
@@ -196,13 +216,14 @@ export function HuntDetail() {
           {!participation.hintsUsed.includes(participation.currentClueIndex) && (
             <button
               onClick={() => useHint(participation.id)}
-              className="mt-3 text-xs font-medium text-amber-600 dark:text-amber-400"
+              className="mt-3 flex items-center gap-1 text-xs font-medium text-gold-400"
             >
-              💡 Reveal AI-verification hint (−15 pts)
+              <Lightbulb className="h-3.5 w-3.5" strokeWidth={2} />
+              Reveal AI-verification hint (−15 pts)
             </button>
           )}
           {participation.hintsUsed.includes(participation.currentClueIndex) && (
-            <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+            <p className="mt-3 rounded-lg border border-gold-500/20 bg-gold-500/10 p-2 text-xs text-gold-300">
               {currentClue.verificationDescription}
             </p>
           )}
@@ -215,20 +236,17 @@ export function HuntDetail() {
             className="hidden"
             onChange={handleFileChange}
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={verifying}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-3 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-          >
-            {verifying ? "Verifying…" : "📷 Scan Surroundings"}
+          <button onClick={() => fileInputRef.current?.click()} disabled={verifying} className="btn-primary mt-4 w-full">
+            <Camera className="h-4 w-4" strokeWidth={2} />
+            {verifying ? "Verifying…" : "Find Treasure"}
           </button>
 
           {feedback && (
             <p
-              className={`mt-3 rounded-lg p-2 text-sm ${
+              className={`mt-3 rounded-lg border p-2 text-sm ${
                 feedback.ok
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-                  : "bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300"
+                  ? "border-explorer-500/30 bg-explorer-500/10 text-explorer-400"
+                  : "border-rose-500/30 bg-rose-500/10 text-rose-400"
               }`}
             >
               {feedback.message}
@@ -239,9 +257,7 @@ export function HuntDetail() {
 
       {participation && (
         <div className="mt-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            Clue progress
-          </h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Clue progress</h3>
           <div className="mt-2 space-y-2">
             {hunt.clues.map((clue, i) => {
               const isCurrent = i === participation.currentClueIndex && participation.status === "in_progress";
@@ -249,38 +265,33 @@ export function HuntDetail() {
               return (
                 <div
                   key={clue.id}
-                  className={`flex items-start gap-3 rounded-xl border p-3 ${
-                    isCurrent
-                      ? "border-brand-300 bg-brand-50 dark:border-brand-800 dark:bg-brand-900/20"
-                      : "border-sand-200 dark:border-neutral-800"
-                  }`}
+                  className={`glass flex items-start gap-3 rounded-xl p-3 ${isCurrent ? "border-sky-400/40" : ""}`}
                 >
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                       isSolved
-                        ? "bg-brand-600 text-white"
+                        ? "bg-explorer-500 text-white"
                         : isCurrent
-                          ? "border-2 border-brand-500 text-brand-600"
-                          : "bg-sand-200 text-neutral-500 dark:bg-neutral-800"
+                          ? "border-2 border-sky-400 text-sky-400"
+                          : "bg-white/10 text-slate-400"
                     }`}
                   >
-                    {isSolved ? "✓" : i + 1}
+                    {isSolved ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : i + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium text-slate-100">
                       {clue.locationName}
                       {isCurrent && (
-                        <span className="ml-2 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] text-white">
+                        <span className="ml-2 rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] text-sky-400">
                           Current
                         </span>
                       )}
                     </p>
-                    {(isCurrent || isSolved) && (
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{clue.hint}</p>
-                    )}
+                    {(isCurrent || isSolved) && <p className="text-xs text-slate-400">{clue.hint}</p>}
                     {!isCurrent && !isSolved && (
-                      <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                        🔒 Solve previous clues to unlock
+                      <p className="flex items-center gap-1 text-xs text-slate-500">
+                        <Lock className="h-3 w-3" strokeWidth={2} />
+                        Solve previous clues to unlock
                       </p>
                     )}
                   </div>

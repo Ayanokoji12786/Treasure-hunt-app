@@ -5,7 +5,6 @@ const KEYS = {
   hunts: "tq_hunts",
   participations: "tq_participations",
   session: "tq_session",
-  theme: "tq_theme",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -34,7 +33,4 @@ export const storage = {
 
   getSessionUserId: () => read<string | null>(KEYS.session, null),
   setSessionUserId: (id: string | null) => write(KEYS.session, id),
-
-  getTheme: () => read<"light" | "dark">(KEYS.theme, "light"),
-  setTheme: (theme: "light" | "dark") => write(KEYS.theme, theme),
 };

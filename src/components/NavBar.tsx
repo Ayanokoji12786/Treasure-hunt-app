@@ -1,41 +1,42 @@
 import { NavLink } from "react-router-dom";
-import { ThemeToggle } from "./ThemeToggle";
+import { Compass, Map, Plus, Trophy, User } from "lucide-react";
 
 const LINKS = [
-  { to: "/explore", label: "Explore", icon: "🧭" },
-  { to: "/my-hunts", label: "My Hunts", icon: "🗺️" },
-  { to: "/create-hunt", label: "Create", icon: "➕" },
-  { to: "/leaderboard", label: "Board", icon: "🏆" },
-  { to: "/profile", label: "Profile", icon: "👤" },
+  { to: "/explore", label: "Explore", Icon: Compass },
+  { to: "/my-hunts", label: "My Hunts", Icon: Map },
+  { to: "/create-hunt", label: "Create", Icon: Plus },
+  { to: "/leaderboard", label: "Board", Icon: Trophy },
+  { to: "/profile", label: "Profile", Icon: User },
 ];
 
 export function NavBar() {
   return (
-    <header className="border-b border-sand-200 bg-white/80 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/80">
+    <header className="glass sticky top-0 z-10 border-x-0 border-t-0">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <NavLink to="/explore" className="flex items-center gap-2 font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
-            🧭
+        <NavLink to="/explore" className="flex items-center gap-2 font-semibold text-slate-100">
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-navy-950"
+            style={{ backgroundImage: "linear-gradient(180deg, var(--color-gold-400), var(--color-gold-600))" }}
+          >
+            <Compass className="h-4.5 w-4.5" strokeWidth={2.25} />
           </span>
-          TrailQuest
+          Luma Hunt
         </NavLink>
         <nav className="flex items-center gap-1">
-          {LINKS.map((link) => (
+          {LINKS.map(({ to, label, Icon }) => (
             <NavLink
-              key={link.to}
-              to={link.to}
+              key={to}
+              to={to}
               className={({ isActive }) =>
-                `rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-brand-600 text-white"
-                    : "text-neutral-600 hover:bg-sand-200 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                `flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  isActive ? "bg-sky-500/15 text-sky-400" : "text-slate-300 hover:bg-white/10 hover:text-slate-100"
                 }`
               }
             >
-              {link.label}
+              <Icon className="h-4 w-4" strokeWidth={2} />
+              <span className="hidden sm:inline">{label}</span>
             </NavLink>
           ))}
-          <ThemeToggle />
         </nav>
       </div>
     </header>

@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
-  --color-brand-50: #eefaf3;
-  --color-brand-100: #d6f2e2;
-  --color-brand-200: #aee1c6;
-  --color-brand-300: #7fcaa8;
-  --color-brand-400: #52ac87;
-  --color-brand-500: #2f8f6c;
-  --color-brand-600: #217257;
-  --color-brand-700: #1c5a46;
-  --color-brand-800: #19483a;
-  --color-brand-900: #163c31;
+  --color-navy-950: #081229;
+  --color-navy-900: #0d1a35;
+  --color-navy-800: #16213e;
+  --color-navy-700: #23395b;
+  --color-navy-600: #2f4a75;
 
-  --color-sand-50: #fafaf8;
-  --color-sand-100: #f5f4f0;
-  --color-sand-200: #e8e6de;
+  --color-gold-300: #ffe58a;
+  --color-gold-400: #ffd95a;
+  --color-gold-500: #f4c542;
+  --color-gold-600: #e6a817;
+
+  --color-explorer-400: #3fa873;
+  --color-explorer-500: #2e8b57;
+  --color-explorer-600: #226e43;
+
+  --color-sky-400: #7ad3ff;
+  --color-sky-500: #57c7ff;
+  --color-sky-600: #2ba4e0;
 }
 
 html,
@@ -26,5 +28,42 @@ body,
 }
 
 body {
-  @apply bg-sand-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+  @apply text-slate-100 antialiased;
+  background-color: var(--color-navy-950);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(87, 199, 255, 0.12), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 110% 10%, rgba(244, 197, 66, 0.08), transparent 60%),
+    repeating-radial-gradient(circle at 25% 30%, transparent 0px, transparent 44px, rgba(244, 197, 66, 0.05) 45px, transparent 46px),
+    repeating-radial-gradient(circle at 85% 75%, transparent 0px, transparent 60px, rgba(87, 199, 255, 0.05) 61px, transparent 62px),
+    radial-gradient(1px 1px at 10% 15%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 80% 8%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 45% 60%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 65% 35%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 25% 80%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 92% 55%, rgba(255, 255, 255, 0.7), transparent),
+    linear-gradient(180deg, var(--color-navy-950) 0%, var(--color-navy-800) 55%, var(--color-navy-700) 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100svh;
+}
+
+@utility glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-[22px] px-5 py-3 font-semibold text-navy-950 shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50;
+  background-image: linear-gradient(180deg, var(--color-gold-400), var(--color-gold-600));
+  box-shadow: 0 8px 24px -8px rgba(230, 168, 23, 0.5);
+}
+
+.btn-glass {
+  @apply glass inline-flex items-center justify-center gap-2 rounded-[22px] px-5 py-3 font-semibold text-slate-100 transition-colors hover:bg-white/15 disabled:opacity-50;
+}
+
+.input-glass {
+  @apply w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none;
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Sparkles } from "lucide-react";
 import { useHuntStore } from "../store/huntStore";
 import { HuntCard } from "../components/HuntCard";
 import type { Difficulty } from "../types";
@@ -23,11 +24,12 @@ export function Explore() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="text-center">
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-          ✨ AI-Powered Treasure Hunts
+        <span className="inline-flex items-center gap-1 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1 text-xs font-medium text-gold-400">
+          <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
+          AI-Powered Treasure Hunts
         </span>
-        <h1 className="mt-4 text-3xl font-bold sm:text-4xl">Explore. Scan. Discover.</h1>
-        <p className="mt-2 text-neutral-500 dark:text-neutral-400">
+        <h1 className="mt-4 text-3xl font-bold text-slate-100 sm:text-4xl">Explore. Scan. Discover.</h1>
+        <p className="mt-2 text-slate-400">
           Find real-world locations by scanning your surroundings. The adventure begins now.
         </p>
       </div>
@@ -37,17 +39,15 @@ export function Explore() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search hunts..."
-          className="w-full rounded-lg border border-sand-200 bg-white px-4 py-2 text-sm shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="input-glass"
         />
         <div className="mt-3 flex justify-center gap-2">
           {FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setDifficulty(f)}
-              className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
-                difficulty === f
-                  ? "bg-brand-600 text-white"
-                  : "bg-sand-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+              className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                difficulty === f ? "bg-sky-500/20 text-sky-400" : "glass text-slate-300"
               }`}
             >
               {f}
@@ -61,9 +61,7 @@ export function Explore() {
           <HuntCard key={hunt.id} hunt={hunt} />
         ))}
         {filtered.length === 0 && (
-          <p className="col-span-full text-center text-sm text-neutral-500 dark:text-neutral-400">
-            No hunts match your search.
-          </p>
+          <p className="col-span-full text-center text-sm text-slate-400">No hunts match your search.</p>
         )}
       </div>
     </div>

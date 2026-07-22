@@ -1,4 +1,4 @@
-# TrailQuest
+# Luma Hunt
 
 Real-world treasure hunts powered by AI vision — create a hunt, pin clues on a map, and have players scan their surroundings to unlock the next step.
 
@@ -22,7 +22,7 @@ Added on top:
 - **GPS proximity check** — shows how far you are from the clue's coordinates before you scan (advisory, not a hard gate, so it's still testable from a desk)
 - **Hint penalty & speed bonus scoring** — revealing the AI-verification description costs points; finishing fast earns a bonus
 - **Confetti + completion screen** with score and elapsed time
-- **Dark mode** (persisted)
+- **Custom visual identity** — navy gradient background with a subtle starfield/contour-line texture, gold/explorer-green/sky-blue accent palette, glassmorphism cards, and Lucide icons throughout
 - **QR code + shareable link** for a hunt's join code
 - **Export / import a hunt as JSON** — the only way to move a hunt between browsers/devices since there's no shared backend (see [Architecture](#architecture--the-honest-caveat))
 - **PWA manifest** (installable / "Add to Home Screen")
@@ -60,7 +60,7 @@ This is the tradeoff for having something that runs immediately with `npm instal
 
 ## Tech stack
 
-Vite + React + TypeScript + Tailwind CSS v4, React Router, Zustand for state, Leaflet + OpenStreetMap for the map picker (free, no API key), `qrcode.react`, `canvas-confetti`.
+Vite + React + TypeScript + Tailwind CSS v4, React Router, Zustand for state, Leaflet + OpenStreetMap for the map picker (free, no API key), `qrcode.react`, `canvas-confetti`, `lucide-react` for icons.
 
 ## Suggested next features
 

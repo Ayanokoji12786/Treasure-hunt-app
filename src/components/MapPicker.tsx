@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
+import { Search } from "lucide-react";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -54,17 +55,13 @@ export function MapPicker({ lat, lng, onChange }: MapPickerProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search for a place (e.g. Eiffel Tower, Paris)"
-          className="flex-1 rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="input-glass flex-1"
         />
-        <button
-          type="submit"
-          disabled={searching}
-          className="rounded-lg bg-brand-600 px-3 py-2 text-sm text-white disabled:opacity-50"
-        >
-          🔍
+        <button type="submit" disabled={searching} className="btn-primary px-3 py-2">
+          <Search className="h-4 w-4" strokeWidth={2} />
         </button>
       </form>
-      <div className="h-56 overflow-hidden rounded-lg border border-sand-200 dark:border-neutral-700">
+      <div className="glass h-56 overflow-hidden rounded-lg">
         <MapContainer
           center={[lat, lng]}
           zoom={14}
@@ -79,7 +76,7 @@ export function MapPicker({ lat, lng, onChange }: MapPickerProps) {
           <ClickHandler onChange={onChange} />
         </MapContainer>
       </div>
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+      <p className="text-xs text-slate-400">
         Click the map to drop a pin, or search above. {lat.toFixed(5)}, {lng.toFixed(5)}
       </p>
     </div>
