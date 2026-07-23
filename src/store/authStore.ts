@@ -15,6 +15,9 @@ interface AuthState {
   verifyOtp: (email: string, otpCode: string) => Promise<boolean>;
   resendOtp: (email: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: (fromUrl?: string) => void;
+  requestPasswordReset: (email: string) => Promise<boolean>;
+  resetPassword: (resetToken: string, newPassword: string) => Promise<boolean>;
   setDisplayName: (name: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
@@ -79,6 +82,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { user } = await base44.auth.loginViaEmailPassword(email, password);
       set({ currentUser: toAppUser(user), error: null });
+      return true;
+    } catch (err) {
+      set({ error: errorMessage(err) });
+      return false;
+    }
+  },
+
+  loginWithGoogle: (fromUrl) => {
+    base44.auth.loginWithProvider("google", fromUrl ?? "/explore");
+  },
+
+  requestPasswordReset: async (email) => {
+    try {
+      await base44.auth.resetPasswordRequest(email);
+      set({ error: null });
+      return true;
+    } catch (err) {
+      set({ error: errorMessage(err) });
+      return false;
+    }
+  },
+
+  resetPassword: async (resetToken, newPassword) => {
+    try {
+      await base44.auth.resetPassword({ resetToken, newPassword });
+      set({ error: null });
       return true;
     } catch (err) {
       set({ error: errorMessage(err) });

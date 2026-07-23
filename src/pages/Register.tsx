@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserPlus, MailCheck } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
+import { GoogleButton } from "../components/GoogleButton";
 
 export function Register() {
   const [step, setStep] = useState<"details" | "verify">("details");
@@ -84,7 +85,15 @@ export function Register() {
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <h1 className="text-2xl font-semibold text-slate-100">Create your account</h1>
       <p className="mt-1 text-sm text-slate-400">Start creating and playing treasure hunts</p>
-      <form onSubmit={handleRegister} className="glass mt-6 space-y-4 rounded-2xl p-5">
+      <div className="glass mt-6 space-y-4 rounded-2xl p-5">
+        <GoogleButton />
+        <div className="flex items-center gap-3 text-xs text-slate-500">
+          <div className="h-px flex-1 bg-white/10" />
+          OR
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+      </div>
+      <form onSubmit={handleRegister} className="glass mt-4 space-y-4 rounded-2xl p-5">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-200">Name</label>
           <input
