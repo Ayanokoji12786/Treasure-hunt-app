@@ -71,6 +71,21 @@ The app owner's Base44 "API key" (the `headers: { api_key }` pattern shown in Ba
 
 Vite + React + TypeScript + Tailwind CSS v4, React Router, Zustand for state, `@base44/sdk` for the backend, Leaflet + OpenStreetMap for location search (free, no API key), `qrcode.react`, `canvas-confetti`, `lucide-react` for icons.
 
+## Android (APK)
+
+The web app is wrapped as a native Android app via [Capacitor](https://capacitorjs.com) (package `com.lumahunt.app`) — see `capacitor.config.ts` and the `android/` project. Requires the Android SDK, `ANDROID_HOME` set, and a JDK compatible with the Android Gradle Plugin (JDK 21 confirmed working; newer JDKs may hit a `jlink`/`androidJdkImage` incompatibility with this AGP version).
+
+```bash
+npm run build            # build the web assets into dist/
+npx cap sync android      # copy them + config into the native project
+cd android
+JAVA_HOME=/path/to/jdk-21 ./gradlew assembleDebug
+```
+
+The debug APK lands at `android/app/build/outputs/apk/debug/app-debug.apk` — install it on a device/emulator with `adb install -r <path>`, or copy it over directly. It's a debug build (unsigned, not for Play Store — that needs a release signing config and a keystore, which isn't set up here).
+
+**Camera and location permissions are declared** in `AndroidManifest.xml` for the photo-scan and GPS-proximity features. Not yet verified running on an actual device/emulator — only that the build succeeds and the manifest/permissions are correct (checked via `aapt dump badging`).
+
 ## Suggested next features
 
 - Team play / multiplayer races on the same hunt

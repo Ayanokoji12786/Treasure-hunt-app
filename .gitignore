@@ -13,6 +13,9 @@ dist-ssr
 *.local
 .env
 
+# Built APK output (build artifact, not source)
+apk-output/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
