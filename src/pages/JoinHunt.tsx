@@ -6,12 +6,16 @@ import { useHuntStore } from "../store/huntStore";
 export function JoinHunt() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const getHuntByCode = useHuntStore((s) => s.getHuntByCode);
   const navigate = useNavigate();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const hunt = getHuntByCode(code);
+    setSubmitting(true);
+    setError(null);
+    const hunt = await getHuntByCode(code);
+    setSubmitting(false);
     if (!hunt) {
       setError("No hunt found with that code.");
       return;
@@ -42,9 +46,9 @@ export function JoinHunt() {
           className="input-glass text-center text-sm font-semibold tracking-widest"
         />
         {error && <p className="text-sm text-rose-400">{error}</p>}
-        <button type="submit" className="btn-primary w-full">
+        <button type="submit" disabled={submitting} className="btn-primary w-full">
           <Ticket className="h-4 w-4" strokeWidth={2} />
-          Start Hunt
+          {submitting ? "Searching…" : "Start Hunt"}
         </button>
       </form>
     </div>

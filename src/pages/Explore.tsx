@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useHuntStore } from "../store/huntStore";
 import { HuntCard } from "../components/HuntCard";
@@ -8,12 +8,16 @@ const FILTERS: Array<Difficulty | "all"> = ["all", "easy", "medium", "hard"];
 
 export function Explore() {
   const hunts = useHuntStore((s) => s.hunts);
+  const loadingHunts = useHuntStore((s) => s.loadingHunts);
+  const loadHunts = useHuntStore((s) => s.loadHunts);
   const [query, setQuery] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty | "all">("all");
 
-  const published = useMemo(() => hunts.filter((h) => h.status === "published"), [hunts]);
+  useEffect(() => {
+    loadHunts();
+  }, [loadHunts]);
 
-  const filtered = published.filter((h) => {
+  const filtered = hunts.filter((h) => {
     const matchesQuery =
       h.title.toLowerCase().includes(query.toLowerCase()) ||
       h.description.toLowerCase().includes(query.toLowerCase());
@@ -57,10 +61,12 @@ export function Explore() {
       </div>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((hunt) => (
-          <HuntCard key={hunt.id} hunt={hunt} />
-        ))}
-        {filtered.length === 0 && (
+        {loadingHunts && (
+          <p className="col-span-full text-center text-sm text-slate-400">Loading hunts…</p>
+        )}
+        {!loadingHunts &&
+          filtered.map((hunt) => <HuntCard key={hunt.id} hunt={hunt} />)}
+        {!loadingHunts && filtered.length === 0 && (
           <p className="col-span-full text-center text-sm text-slate-400">No hunts match your search.</p>
         )}
       </div>

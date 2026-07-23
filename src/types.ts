@@ -2,17 +2,17 @@ export type Difficulty = "easy" | "medium" | "hard";
 
 export interface Clue {
   id: string;
+  order: number;
   locationName: string;
-  lat: number;
-  lng: number;
+  locationQuery: string;
   hint: string;
   verificationDescription: string;
-  referencePhoto?: string;
+  referencePhoto?: string | null;
 }
 
 export interface Hunt {
   id: string;
-  code: string;
+  joinCode?: string;
   title: string;
   description: string;
   difficulty: Difficulty;
@@ -24,12 +24,10 @@ export interface Hunt {
   createdAt: string;
 }
 
-export interface User {
+export interface AppUser {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
-  createdAt: string;
 }
 
 export type ParticipationStatus = "in_progress" | "completed";
@@ -39,12 +37,11 @@ export interface Participation {
   huntId: string;
   userId: string;
   status: ParticipationStatus;
-  currentClueIndex: number;
-  hintsUsed: number[];
-  startedAt: string;
-  completedAt?: string;
-  elapsedSeconds?: number;
-  score: number;
+  currentClueOrder: number;
+  completedClues: number;
+  scanAttempts: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LeaderboardEntry {

@@ -1,10 +1,8 @@
-import type { Hunt, Participation, User } from "../types";
+import type { Hunt } from "../types";
 
 const KEYS = {
-  users: "tq_users",
-  hunts: "tq_hunts",
-  participations: "tq_participations",
-  session: "tq_session",
+  drafts: "lh_drafts",
+  hintsUsed: "lh_hints_used",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -22,15 +20,9 @@ function write<T>(key: string, value: T): void {
 }
 
 export const storage = {
-  getUsers: () => read<User[]>(KEYS.users, []),
-  setUsers: (users: User[]) => write(KEYS.users, users),
+  getDrafts: () => read<Hunt[]>(KEYS.drafts, []),
+  setDrafts: (drafts: Hunt[]) => write(KEYS.drafts, drafts),
 
-  getHunts: () => read<Hunt[]>(KEYS.hunts, []),
-  setHunts: (hunts: Hunt[]) => write(KEYS.hunts, hunts),
-
-  getParticipations: () => read<Participation[]>(KEYS.participations, []),
-  setParticipations: (p: Participation[]) => write(KEYS.participations, p),
-
-  getSessionUserId: () => read<string | null>(KEYS.session, null),
-  setSessionUserId: (id: string | null) => write(KEYS.session, id),
+  getHintsUsed: () => read<Record<string, number[]>>(KEYS.hintsUsed, {}),
+  setHintsUsed: (map: Record<string, number[]>) => write(KEYS.hintsUsed, map),
 };

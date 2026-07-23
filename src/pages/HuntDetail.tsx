@@ -17,7 +17,10 @@ import { useAuthStore } from "../store/authStore";
 import { DifficultyBadge } from "../components/DifficultyBadge";
 import { celebrate } from "../lib/confetti";
 import { getCurrentPosition, haversineMeters } from "../lib/geo";
+import { geocodeQuery } from "../lib/geocode";
 import { isAiVerificationEnabled } from "../lib/verify";
+import { computeScore, elapsedSeconds } from "../lib/scoring";
+import type { Hunt } from "../types";
 import { QRCodeSVG } from "qrcode.react";
 
 const PROXIMITY_THRESHOLD_METERS = 300;
@@ -34,15 +37,18 @@ function fileToDataUrl(file: File): Promise<string> {
 export function HuntDetail() {
   const { huntId } = useParams<{ huntId: string }>();
   const currentUser = useAuthStore((s) => s.currentUser);
-  const hunt = useHuntStore((s) => (huntId ? s.getHunt(huntId) : undefined));
+  const loadHuntById = useHuntStore((s) => s.loadHuntById);
   const participation = useHuntStore((s) =>
     huntId && currentUser ? s.getParticipation(huntId, currentUser.id) : undefined,
   );
   const startHunt = useHuntStore((s) => s.startHunt);
   const useHint = useHuntStore((s) => s.useHint);
+  const hintsUsedFor = useHuntStore((s) => s.hintsUsedFor);
   const submitVerification = useHuntStore((s) => s.submitVerification);
   const exportHunt = useHuntStore((s) => s.exportHunt);
 
+  const [hunt, setHunt] = useState<Hunt | undefined>();
+  const [loadingHunt, setLoadingHunt] = useState(true);
   const [starting, setStarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
@@ -52,15 +58,26 @@ export function HuntDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const celebratedRef = useRef(false);
 
-  const currentClue = hunt && participation ? hunt.clues[participation.currentClueIndex] : undefined;
+  useEffect(() => {
+    if (!huntId) return;
+    setLoadingHunt(true);
+    loadHuntById(huntId)
+      .then(setHunt)
+      .finally(() => setLoadingHunt(false));
+  }, [huntId, loadHuntById]);
+
+  const currentClue =
+    hunt && participation ? hunt.clues.find((c) => c.order === participation.currentClueOrder) : undefined;
 
   useEffect(() => {
     setDistance(null);
     setGeoError(null);
     setFeedback(null);
     if (!currentClue) return;
-    getCurrentPosition()
-      .then((pos) => setDistance(haversineMeters(pos.lat, pos.lng, currentClue.lat, currentClue.lng)))
+    Promise.all([getCurrentPosition(), geocodeQuery(currentClue.locationQuery)])
+      .then(([pos, target]) => {
+        if (target) setDistance(haversineMeters(pos.lat, pos.lng, target.lat, target.lng));
+      })
       .catch((err) => setGeoError(err.message ?? "Location unavailable."));
   }, [currentClue?.id]);
 
@@ -71,6 +88,10 @@ export function HuntDetail() {
     }
   }, [participation?.status]);
 
+  if (loadingHunt) {
+    return <div className="mx-auto max-w-2xl px-4 py-16 text-center text-slate-400">Loading hunt…</div>;
+  }
+
   if (!hunt) {
     return <div className="mx-auto max-w-2xl px-4 py-16 text-center text-slate-400">Hunt not found.</div>;
   }
@@ -78,8 +99,11 @@ export function HuntDetail() {
   async function handleStart() {
     if (!currentUser || !huntId) return;
     setStarting(true);
-    startHunt(huntId, currentUser.id);
-    setStarting(false);
+    try {
+      await startHunt(huntId, currentUser.id);
+    } finally {
+      setStarting(false);
+    }
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -108,7 +132,9 @@ export function HuntDetail() {
     }
   }
 
-  const joinUrl = `${window.location.origin}/join?code=${hunt.code}`;
+  const joinUrl = hunt.joinCode ? `${window.location.origin}/join?code=${hunt.joinCode}` : undefined;
+  const hintsUsed = participation ? hintsUsedFor(participation.id) : [];
+  const score = participation ? computeScore(hunt, participation, hintsUsed) : 0;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -130,20 +156,22 @@ export function HuntDetail() {
           <MapPin className="h-3.5 w-3.5 text-gold-500" strokeWidth={2} />
           {hunt.clues.length} clues
         </span>
-        <button onClick={() => setShowShare((v) => !v)} className="flex items-center gap-1 font-medium text-sky-400">
-          <Link2 className="h-3.5 w-3.5" strokeWidth={2} />
-          Share code: {hunt.code}
-        </button>
+        {hunt.joinCode && (
+          <button onClick={() => setShowShare((v) => !v)} className="flex items-center gap-1 font-medium text-sky-400">
+            <Link2 className="h-3.5 w-3.5" strokeWidth={2} />
+            Share code: {hunt.joinCode}
+          </button>
+        )}
       </div>
 
-      {showShare && (
+      {showShare && joinUrl && (
         <div className="glass mt-3 flex items-center gap-4 rounded-xl p-4">
           <div className="rounded-lg bg-white p-2">
             <QRCodeSVG value={joinUrl} size={96} />
           </div>
           <div className="text-sm">
             <p className="font-medium text-slate-100">Scan to join</p>
-            <p className="text-slate-400">Code: {hunt.code}</p>
+            <p className="text-slate-400">Code: {hunt.joinCode}</p>
             <button
               onClick={() => {
                 const json = exportHunt(hunt.id);
@@ -164,10 +192,16 @@ export function HuntDetail() {
         </div>
       )}
 
-      {!participation && (
+      {!participation && hunt.status === "draft" && (
+        <p className="mt-6 rounded-xl border border-gold-500/20 bg-gold-500/10 p-3 text-sm text-gold-300">
+          This is a draft only you can see. Publish it from Create Hunt before anyone can play it.
+        </p>
+      )}
+
+      {!participation && hunt.status !== "draft" && (
         <button onClick={handleStart} disabled={starting} className="btn-primary mt-6 w-full">
           <Compass className="h-4 w-4" strokeWidth={2} />
-          Start Hunt
+          {starting ? "Starting…" : "Start Hunt"}
         </button>
       )}
 
@@ -176,10 +210,8 @@ export function HuntDetail() {
           <Trophy className="mx-auto h-9 w-9 text-gold-500" strokeWidth={1.75} />
           <h2 className="mt-2 text-xl font-bold text-slate-100">Hunt complete!</h2>
           <p className="mt-1 text-sm text-slate-300">
-            Score: <strong className="text-explorer-400">{participation.score}</strong> · Time:{" "}
-            {participation.elapsedSeconds
-              ? `${Math.floor(participation.elapsedSeconds / 60)}m ${participation.elapsedSeconds % 60}s`
-              : "—"}
+            Score: <strong className="text-explorer-400">{score}</strong> · Time:{" "}
+            {`${Math.floor(elapsedSeconds(participation) / 60)}m ${elapsedSeconds(participation) % 60}s`}
           </p>
           <Link to="/leaderboard" className="mt-4 inline-block text-sm font-medium text-sky-400">
             View leaderboard →
@@ -213,16 +245,19 @@ export function HuntDetail() {
             )}
           </div>
 
-          {!participation.hintsUsed.includes(participation.currentClueIndex) && (
+          {!hintsUsed.includes(currentClue.order) && (
             <button
-              onClick={() => useHint(participation.id)}
+              onClick={() => {
+                useHint(participation.id, currentClue.order);
+                setFeedback(null);
+              }}
               className="mt-3 flex items-center gap-1 text-xs font-medium text-gold-400"
             >
               <Lightbulb className="h-3.5 w-3.5" strokeWidth={2} />
               Reveal AI-verification hint (−15 pts)
             </button>
           )}
-          {participation.hintsUsed.includes(participation.currentClueIndex) && (
+          {hintsUsed.includes(currentClue.order) && (
             <p className="mt-3 rounded-lg border border-gold-500/20 bg-gold-500/10 p-2 text-xs text-gold-300">
               {currentClue.verificationDescription}
             </p>
@@ -259,9 +294,9 @@ export function HuntDetail() {
         <div className="mt-6">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Clue progress</h3>
           <div className="mt-2 space-y-2">
-            {hunt.clues.map((clue, i) => {
-              const isCurrent = i === participation.currentClueIndex && participation.status === "in_progress";
-              const isSolved = i < participation.currentClueIndex || participation.status === "completed";
+            {hunt.clues.map((clue) => {
+              const isCurrent = clue.order === participation.currentClueOrder && participation.status === "in_progress";
+              const isSolved = clue.order < participation.currentClueOrder || participation.status === "completed";
               return (
                 <div
                   key={clue.id}
@@ -276,7 +311,7 @@ export function HuntDetail() {
                           : "bg-white/10 text-slate-400"
                     }`}
                   >
-                    {isSolved ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : i + 1}
+                    {isSolved ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : clue.order}
                   </span>
                   <div>
                     <p className="text-sm font-medium text-slate-100">

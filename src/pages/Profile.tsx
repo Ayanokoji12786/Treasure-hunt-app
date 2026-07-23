@@ -23,7 +23,7 @@ export function Profile() {
   );
   const completed = mine.filter((p) => p.status === "completed");
   const inProgress = mine.filter((p) => p.status === "in_progress");
-  const cluesSolved = mine.reduce((sum, p) => sum + p.currentClueIndex, 0);
+  const cluesSolved = mine.reduce((sum, p) => sum + p.completedClues, 0);
   const earnedBadges = BADGES.filter((b) => completed.length >= b.threshold);
 
   if (!currentUser) return null;

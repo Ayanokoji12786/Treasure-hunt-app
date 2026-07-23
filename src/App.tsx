@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { NavBar } from "./components/NavBar";
 import { Protected } from "./components/Protected";
 import { useAuthStore } from "./store/authStore";
+import { useHuntStore } from "./store/huntStore";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
@@ -16,6 +18,22 @@ import { NotFound } from "./pages/NotFound";
 
 function Shell({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const loading = useAuthStore((s) => s.loading);
+  const restoreSession = useAuthStore((s) => s.restoreSession);
+  const loadParticipations = useHuntStore((s) => s.loadParticipations);
+
+  useEffect(() => {
+    restoreSession();
+  }, [restoreSession]);
+
+  useEffect(() => {
+    if (currentUser) loadParticipations(currentUser.id);
+  }, [currentUser, loadParticipations]);
+
+  if (loading) {
+    return <div className="flex min-h-screen items-center justify-center text-slate-400">Loading…</div>;
+  }
+
   return (
     <div className="min-h-screen">
       {currentUser && <NavBar />}

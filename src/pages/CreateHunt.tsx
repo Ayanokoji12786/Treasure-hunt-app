@@ -3,16 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { Plus, Trash2, Save, Compass } from "lucide-react";
 import { useHuntStore } from "../store/huntStore";
 import { useAuthStore } from "../store/authStore";
-import { MapPicker } from "../components/MapPicker";
+import { LocationSearch } from "../components/LocationSearch";
 import { generateId } from "../lib/id";
 import type { Clue, Difficulty } from "../types";
 
-function emptyClue(): Clue {
+function emptyClue(order: number): Clue {
   return {
     id: generateId(),
+    order,
     locationName: "",
-    lat: 40.7829,
-    lng: -73.9654,
+    locationQuery: "",
     hint: "",
     verificationDescription: "",
   };
@@ -32,7 +32,8 @@ export function CreateHunt() {
   const [description, setDescription] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [coverImage, setCoverImage] = useState("");
-  const [clues, setClues] = useState<Clue[]>([emptyClue()]);
+  const [clues, setClues] = useState<Clue[]>([emptyClue(1)]);
+  const [saving, setSaving] = useState(false);
   const currentUser = useAuthStore((s) => s.currentUser);
   const createHunt = useHuntStore((s) => s.createHunt);
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export function CreateHunt() {
   }
 
   function addClue() {
-    setClues((cs) => [...cs, emptyClue()]);
+    setClues((cs) => [...cs, emptyClue(cs.length + 1)]);
   }
 
   function removeClue(index: number) {
@@ -61,25 +62,30 @@ export function CreateHunt() {
     updateClue(index, { referencePhoto: await fileToDataUrl(file) });
   }
 
-  function handleSave(publish: boolean) {
+  async function handleSave(publish: boolean) {
     if (!currentUser) return;
     if (!title.trim() || clues.some((c) => !c.locationName || !c.hint)) {
       alert("Please fill in the hunt title and every clue's location name and hint.");
       return;
     }
-    const hunt = createHunt(
-      {
-        title,
-        description,
-        difficulty,
-        coverImage: coverImage || `https://picsum.photos/seed/${encodeURIComponent(title)}/800/450`,
-        clues,
-        creatorId: currentUser.id,
-        creatorName: currentUser.name,
-      },
-      publish,
-    );
-    navigate(`/hunt/${hunt.id}`);
+    setSaving(true);
+    try {
+      const hunt = await createHunt(
+        {
+          title,
+          description,
+          difficulty,
+          coverImage: coverImage || `https://picsum.photos/seed/${encodeURIComponent(title)}/800/450`,
+          clues,
+          creatorId: currentUser.id,
+          creatorName: currentUser.name,
+        },
+        publish,
+      );
+      navigate(`/hunt/${hunt.id}`);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -89,7 +95,7 @@ export function CreateHunt() {
       </Link>
       <h1 className="mt-3 text-2xl font-bold text-slate-100">Create a Treasure Hunt</h1>
       <p className="mt-1 text-slate-400">
-        Design your hunt, pin locations on the map, and share the code with players.
+        Design your hunt, search locations for the map, and share the code with players.
       </p>
 
       <div className="glass mt-6 space-y-4 rounded-2xl p-5">
@@ -171,11 +177,10 @@ export function CreateHunt() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">Pin Location on Map</label>
-              <MapPicker
-                lat={clue.lat}
-                lng={clue.lng}
-                onChange={(lat, lng) => updateClue(index, { lat, lng })}
+              <label className="mb-1 block text-sm font-medium text-slate-200">Search Location on Map</label>
+              <LocationSearch
+                value={clue.locationQuery}
+                onChange={(locationQuery) => updateClue(index, { locationQuery })}
               />
             </div>
             <div>
@@ -214,13 +219,13 @@ export function CreateHunt() {
       </div>
 
       <div className="mt-6 flex gap-3">
-        <button onClick={() => handleSave(false)} className="btn-glass flex-1">
+        <button onClick={() => handleSave(false)} disabled={saving} className="btn-glass flex-1">
           <Save className="h-4 w-4" strokeWidth={2} />
           Save as Draft
         </button>
-        <button onClick={() => handleSave(true)} className="btn-primary flex-1">
+        <button onClick={() => handleSave(true)} disabled={saving} className="btn-primary flex-1">
           <Compass className="h-4 w-4" strokeWidth={2} />
-          Publish Hunt
+          {saving ? "Publishing…" : "Publish Hunt"}
         </button>
       </div>
     </div>

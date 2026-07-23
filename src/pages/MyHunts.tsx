@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Map, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Map, CheckCircle2, FileEdit } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { useHuntStore } from "../store/huntStore";
 import { HuntCard } from "../components/HuntCard";
@@ -7,8 +7,21 @@ import { HuntCard } from "../components/HuntCard";
 export function MyHunts() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const hunts = useHuntStore((s) => s.hunts);
+  const drafts = useHuntStore((s) => s.drafts);
+  const loadHunts = useHuntStore((s) => s.loadHunts);
+  const loadDrafts = useHuntStore((s) => s.loadDrafts);
   const participations = useHuntStore((s) => s.participations);
   const [tab, setTab] = useState<"in_progress" | "completed">("in_progress");
+
+  useEffect(() => {
+    loadHunts();
+    loadDrafts();
+  }, [loadHunts, loadDrafts]);
+
+  const myDrafts = useMemo(
+    () => drafts.filter((h) => h.creatorId === currentUser?.id),
+    [drafts, currentUser],
+  );
 
   const mine = useMemo(
     () => participations.filter((p) => p.userId === currentUser?.id),
@@ -53,6 +66,20 @@ export function MyHunts() {
           <p className="col-span-full text-sm text-slate-400">Nothing here yet — head to Explore to start a hunt.</p>
         )}
       </div>
+
+      {myDrafts.length > 0 && (
+        <div className="mt-10">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-300">
+            <FileEdit className="h-4 w-4 text-gold-400" strokeWidth={2} />
+            Your drafts (only visible to you)
+          </h2>
+          <div className="mt-3 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {myDrafts.map((hunt) => (
+              <HuntCard key={hunt.id} hunt={hunt} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
