@@ -34,13 +34,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   restoreSession: async () => {
     try {
-      const isAuthed = await base44.auth.isAuthenticated();
-      if (isAuthed) {
+      // Skip the network round-trip (and its noisy 401) when there's no stored token
+      // — the SDK persists it here after login / OAuth redirect.
+      const hasToken =
+        typeof window !== "undefined" && !!window.localStorage.getItem("base44_access_token");
+      if (hasToken) {
         const user = await base44.auth.me();
         set({ currentUser: toAppUser(user) });
       }
     } catch {
-      // no valid session; stay logged out
+      // token invalid/expired; stay logged out
     } finally {
       set({ loading: false });
     }
