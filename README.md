@@ -86,10 +86,6 @@ The debug APK lands at `android/app/build/outputs/apk/debug/app-debug.apk` — i
 
 **Camera and location permissions are declared** in `AndroidManifest.xml` for the photo-scan and GPS-proximity features. Not yet verified running on an actual device/emulator — only that the build succeeds and the manifest/permissions are correct (checked via `aapt dump badging`).
 
-## Suggested next features
+## Access it here:
+https://treasure-hunt-app-phi.vercel.app
 
-- Team play / multiplayer races on the same hunt
-- Push notifications when a friend joins your hunt
-- Timed/limited hunts (e.g. only playable during an event window)
-- Photo gallery of everyone's submitted verification photos per hunt
-- Social login (Google OAuth) — the original had this; needs OAuth app credentials
