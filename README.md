@@ -441,6 +441,10 @@ The hunt creation interface.
 
 Creators configure the hunt and its clues.
 
+### Clue location search
+
+By default, locations are searched via the free Nominatim text search. If `VITE_GOOGLE_MAPS_API_KEY` is configured, this is replaced with Google Places Autocomplete plus an interactive map where the pin can be clicked or dragged to fine-tune the spot — noticeably better matching than Nominatim's single best-guess result. Either way, the result is stored as text, matching Base44's real `Clue` schema (no lat/lng field).
+
 ### Save as Draft
 
 Drafts remain **only in the browser**.
@@ -704,9 +708,10 @@ The user receives a real reset email containing a reset token/link.
 | Base44 SDK      | Backend/data/authentication |
 | Groq            | AI photo verification       |
 | Qwen Vision     | Image understanding         |
-| Leaflet         | Mapping                     |
-| OpenStreetMap   | Map data                    |
+| Leaflet         | Mapping (free fallback)     |
+| OpenStreetMap   | Map data (free fallback)    |
 | Nominatim       | Geocoding                   |
+| Google Maps Platform | Optional richer clue location search |
 | qrcode.react    | QR generation               |
 | canvas-confetti | Completion animation        |
 | Lucide          | Icons                       |
@@ -744,11 +749,20 @@ VITE_GROQ_API_KEY
 
 If the Groq key is absent, photo verification automatically falls back to acceptance mode with a visible disabled-verification notice.
 
+Also optional:
+
+```text
+VITE_GOOGLE_MAPS_API_KEY
+```
+
+Enables Google Places Autocomplete + an interactive draggable-pin map for the clue location search in Create Hunt. Requires a Google Cloud project with the Maps JavaScript API and Places API enabled, and a billing account (a monthly free credit is included, but usage beyond it is billed). Without this key, the free Nominatim-based search is used instead.
+
 Example:
 
 ```env
 VITE_BASE44_APP_ID=your_base44_app_id
 VITE_GROQ_API_KEY=your_groq_api_key
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 ---

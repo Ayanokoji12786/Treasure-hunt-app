@@ -6,6 +6,8 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { geocodeQuery } from "../lib/geocode";
+import { useGoogleMaps } from "../lib/googleMaps";
+import { GoogleLocationPicker } from "./GoogleLocationPicker";
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -18,7 +20,15 @@ interface LocationSearchProps {
   onChange: (locationQuery: string) => void;
 }
 
-export function LocationSearch({ value, onChange }: LocationSearchProps) {
+export function LocationSearch(props: LocationSearchProps) {
+  // Only set (via GoogleMapsProvider) when VITE_GOOGLE_MAPS_API_KEY is configured —
+  // otherwise this falls back to the free Nominatim search below.
+  const googleMaps = useGoogleMaps();
+  if (googleMaps) return <GoogleLocationPicker {...props} />;
+  return <NominatimLocationSearch {...props} />;
+}
+
+function NominatimLocationSearch({ value, onChange }: LocationSearchProps) {
   const [input, setInput] = useState(value);
   const [preview, setPreview] = useState<{ lat: number; lng: number } | null>(null);
   const [searching, setSearching] = useState(false);

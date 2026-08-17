@@ -4,6 +4,7 @@ import { Plus, Trash2, Save, Compass } from "lucide-react";
 import { useHuntStore } from "../store/huntStore";
 import { useAuthStore } from "../store/authStore";
 import { LocationSearch } from "../components/LocationSearch";
+import { GOOGLE_MAPS_API_KEY, GoogleMapsProvider } from "../lib/googleMaps";
 import { generateId } from "../lib/id";
 import type { Clue, Difficulty } from "../types";
 
@@ -16,6 +17,10 @@ function emptyClue(order: number): Clue {
     hint: "",
     verificationDescription: "",
   };
+}
+
+function MaybeGoogleMaps({ children }: { children: React.ReactNode }) {
+  return GOOGLE_MAPS_API_KEY ? <GoogleMapsProvider>{children}</GoogleMapsProvider> : <>{children}</>;
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -152,71 +157,73 @@ export function CreateHunt() {
         </button>
       </div>
 
-      <div className="mt-3 space-y-4">
-        {clues.map((clue, index) => (
-          <div key={clue.id} className="glass space-y-3 rounded-2xl p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-100">Clue #{index + 1}</p>
-              {clues.length > 1 && (
-                <button
-                  onClick={() => removeClue(index)}
-                  className="flex items-center gap-1 text-xs text-rose-400"
-                >
-                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
-                  Remove
-                </button>
-              )}
+      <MaybeGoogleMaps>
+        <div className="mt-3 space-y-4">
+          {clues.map((clue, index) => (
+            <div key={clue.id} className="glass space-y-3 rounded-2xl p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-100">Clue #{index + 1}</p>
+                {clues.length > 1 && (
+                  <button
+                    onClick={() => removeClue(index)}
+                    className="flex items-center gap-1 text-xs text-rose-400"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-200">Location Name</label>
+                <input
+                  value={clue.locationName}
+                  onChange={(e) => updateClue(index, { locationName: e.target.value })}
+                  placeholder="e.g. The Old Clock Tower"
+                  className="input-glass"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-200">Search Location on Map</label>
+                <LocationSearch
+                  value={clue.locationQuery}
+                  onChange={(locationQuery) => updateClue(index, { locationQuery })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-200">Hint for Players</label>
+                <textarea
+                  value={clue.hint}
+                  onChange={(e) => updateClue(index, { hint: e.target.value })}
+                  placeholder="The clue/riddle players will see to guide them to this spot"
+                  rows={2}
+                  className="input-glass"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-200">
+                  Location Description (for AI verification)
+                </label>
+                <textarea
+                  value={clue.verificationDescription}
+                  onChange={(e) => updateClue(index, { verificationDescription: e.target.value })}
+                  placeholder="Describe what the surroundings look like — buildings, signs, landmarks, colors, etc. This is used by AI to verify the player's photo."
+                  rows={2}
+                  className="input-glass"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-200">Reference Photo (optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleReferenceChange(index, e)}
+                  className="w-full text-sm text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-slate-200"
+                />
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">Location Name</label>
-              <input
-                value={clue.locationName}
-                onChange={(e) => updateClue(index, { locationName: e.target.value })}
-                placeholder="e.g. The Old Clock Tower"
-                className="input-glass"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">Search Location on Map</label>
-              <LocationSearch
-                value={clue.locationQuery}
-                onChange={(locationQuery) => updateClue(index, { locationQuery })}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">Hint for Players</label>
-              <textarea
-                value={clue.hint}
-                onChange={(e) => updateClue(index, { hint: e.target.value })}
-                placeholder="The clue/riddle players will see to guide them to this spot"
-                rows={2}
-                className="input-glass"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">
-                Location Description (for AI verification)
-              </label>
-              <textarea
-                value={clue.verificationDescription}
-                onChange={(e) => updateClue(index, { verificationDescription: e.target.value })}
-                placeholder="Describe what the surroundings look like — buildings, signs, landmarks, colors, etc. This is used by AI to verify the player's photo."
-                rows={2}
-                className="input-glass"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-200">Reference Photo (optional)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleReferenceChange(index, e)}
-                className="w-full text-sm text-slate-300 file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-slate-200"
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </MaybeGoogleMaps>
 
       <div className="mt-6 flex gap-3">
         <button onClick={() => handleSave(false)} disabled={saving} className="btn-glass flex-1">
