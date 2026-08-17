@@ -32,6 +32,7 @@ interface Entry {
 
 export function Leaderboard() {
   const [entries, setEntries] = useState<Entry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +86,13 @@ export function Leaderboard() {
       if (!cancelled) setEntries(built);
     }
 
-    load();
+    load().catch((err) => {
+      if (cancelled) return;
+      setError(
+        err instanceof Error ? err.message : "Couldn't load the leaderboard. Please try again.",
+      );
+      setEntries([]);
+    });
     return () => {
       cancelled = true;
     };
@@ -95,7 +102,12 @@ export function Leaderboard() {
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="text-2xl font-bold text-slate-100">Leaderboard</h1>
       {entries === null && <p className="mt-10 text-center text-sm text-slate-400">Loading…</p>}
-      {entries?.length === 0 && (
+      {error && (
+        <p className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-400">
+          {error}
+        </p>
+      )}
+      {!error && entries?.length === 0 && (
         <div className="glass mt-10 rounded-2xl p-10 text-center text-slate-400">
           <Trophy className="mx-auto h-10 w-10 text-gold-500/60" strokeWidth={1.5} />
           <p className="mt-3 font-medium text-slate-200">No completions yet</p>

@@ -39,6 +39,7 @@ export function CreateHunt() {
   const [coverImage, setCoverImage] = useState("");
   const [clues, setClues] = useState<Clue[]>([emptyClue(1)]);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const currentUser = useAuthStore((s) => s.currentUser);
   const createHunt = useHuntStore((s) => s.createHunt);
   const navigate = useNavigate();
@@ -70,10 +71,11 @@ export function CreateHunt() {
   async function handleSave(publish: boolean) {
     if (!currentUser) return;
     if (!title.trim() || clues.some((c) => !c.locationName || !c.hint)) {
-      alert("Please fill in the hunt title and every clue's location name and hint.");
+      setSaveError("Please fill in the hunt title and every clue's location name and hint.");
       return;
     }
     setSaving(true);
+    setSaveError(null);
     try {
       const hunt = await createHunt(
         {
@@ -88,6 +90,10 @@ export function CreateHunt() {
         publish,
       );
       navigate(`/hunt/${hunt.id}`);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Couldn't save this hunt. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -224,6 +230,12 @@ export function CreateHunt() {
           ))}
         </div>
       </MaybeGoogleMaps>
+
+      {saveError && (
+        <p className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-400">
+          {saveError}
+        </p>
+      )}
 
       <div className="mt-6 flex gap-3">
         <button onClick={() => handleSave(false)} disabled={saving} className="btn-glass flex-1">

@@ -64,7 +64,24 @@ export async function verifyPhoto(
 
   const json = await response.json();
   const text: string = json.choices?.[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+
+  // The model occasionally wraps its JSON in prose, or returns none at all. Treat an
+  // unparseable reply as "couldn't verify" rather than throwing a raw SyntaxError at
+  // the player.
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  let parsed: { verified?: unknown; confidence?: unknown; reasoning?: unknown };
+  try {
+    if (start === -1 || end === -1) throw new Error("no JSON object in reply");
+    parsed = JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return {
+      verified: false,
+      confidence: 0,
+      reasoning: "Couldn't read the AI's response for this photo — please try scanning again.",
+      source: "ai",
+    };
+  }
 
   return {
     verified: Boolean(parsed.verified),

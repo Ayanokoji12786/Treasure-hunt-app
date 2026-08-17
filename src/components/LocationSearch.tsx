@@ -32,21 +32,24 @@ function NominatimLocationSearch({ value, onChange }: LocationSearchProps) {
   const [input, setInput] = useState(value);
   const [preview, setPreview] = useState<{ lat: number; lng: number } | null>(null);
   const [searching, setSearching] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim()) return;
     setSearching(true);
-    setNotFound(false);
+    setError(null);
     try {
       const result = await geocodeQuery(input);
       if (result) {
         setPreview(result);
         onChange(input.trim());
       } else {
-        setNotFound(true);
+        setError("Couldn't find that place — try a more specific search.");
       }
+    } catch {
+      // Nominatim rate-limits aggressively; without this the search silently does nothing.
+      setError("Location search is unavailable right now — try again in a moment.");
     } finally {
       setSearching(false);
     }
@@ -65,7 +68,7 @@ function NominatimLocationSearch({ value, onChange }: LocationSearchProps) {
           <Search className="h-4 w-4" strokeWidth={2} />
         </button>
       </form>
-      {notFound && <p className="text-xs text-rose-400">Couldn't find that place — try a more specific search.</p>}
+      {error && <p className="text-xs text-rose-400">{error}</p>}
       {preview && (
         <div className="glass h-40 overflow-hidden rounded-lg">
           <MapContainer center={[preview.lat, preview.lng]} zoom={14} key={`${preview.lat}-${preview.lng}`} className="h-full w-full">

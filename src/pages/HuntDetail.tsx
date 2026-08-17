@@ -42,7 +42,7 @@ export function HuntDetail() {
     huntId && currentUser ? s.getParticipation(huntId, currentUser.id) : undefined,
   );
   const startHunt = useHuntStore((s) => s.startHunt);
-  const useHint = useHuntStore((s) => s.useHint);
+  const revealHint = useHuntStore((s) => s.revealHint);
   const hintsUsedFor = useHuntStore((s) => s.hintsUsedFor);
   const submitVerification = useHuntStore((s) => s.submitVerification);
   const exportHunt = useHuntStore((s) => s.exportHunt);
@@ -63,16 +63,19 @@ export function HuntDetail() {
     setLoadingHunt(true);
     loadHuntById(huntId)
       .then(setHunt)
+      .catch(() => setHunt(undefined))
       .finally(() => setLoadingHunt(false));
   }, [huntId, loadHuntById]);
 
   const currentClue =
     hunt && participation ? hunt.clues.find((c) => c.order === participation.currentClueOrder) : undefined;
 
+  // Deliberately does not clear `feedback`: this runs whenever the clue changes, which
+  // includes right after a successful scan — clearing here would wipe the "next clue
+  // unlocked" message before the player ever sees it.
   useEffect(() => {
     setDistance(null);
     setGeoError(null);
-    setFeedback(null);
     if (!currentClue) return;
     Promise.all([getCurrentPosition(), geocodeQuery(currentClue.locationQuery)])
       .then(([pos, target]) => {
@@ -99,8 +102,14 @@ export function HuntDetail() {
   async function handleStart() {
     if (!currentUser || !huntId) return;
     setStarting(true);
+    setFeedback(null);
     try {
       await startHunt(huntId, currentUser.id);
+    } catch (err) {
+      setFeedback({
+        ok: false,
+        message: err instanceof Error ? err.message : "Couldn't start this hunt. Please try again.",
+      });
     } finally {
       setStarting(false);
     }
@@ -199,10 +208,17 @@ export function HuntDetail() {
       )}
 
       {!participation && hunt.status !== "draft" && (
-        <button onClick={handleStart} disabled={starting} className="btn-primary mt-6 w-full">
-          <Compass className="h-4 w-4" strokeWidth={2} />
-          {starting ? "Starting…" : "Start Hunt"}
-        </button>
+        <>
+          <button onClick={handleStart} disabled={starting} className="btn-primary mt-6 w-full">
+            <Compass className="h-4 w-4" strokeWidth={2} />
+            {starting ? "Starting…" : "Start Hunt"}
+          </button>
+          {feedback && !feedback.ok && (
+            <p className="mt-3 rounded-lg border border-rose-500/30 bg-rose-500/10 p-2 text-sm text-rose-400">
+              {feedback.message}
+            </p>
+          )}
+        </>
       )}
 
       {participation?.status === "completed" && (
@@ -248,7 +264,7 @@ export function HuntDetail() {
           {!hintsUsed.includes(currentClue.order) && (
             <button
               onClick={() => {
-                useHint(participation.id, currentClue.order);
+                revealHint(participation.id, currentClue.order);
                 setFeedback(null);
               }}
               className="mt-3 flex items-center gap-1 text-xs font-medium text-gold-400"

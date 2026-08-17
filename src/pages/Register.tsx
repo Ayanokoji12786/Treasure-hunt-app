@@ -31,16 +31,20 @@ export function Register() {
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const verified = await verifyOtp(email, otpCode);
-    if (verified) {
-      const loggedIn = await login(email, password);
-      if (loggedIn && name.trim()) await setDisplayName(name.trim());
-      if (loggedIn) {
-        navigate("/explore");
-        return;
+    try {
+      const verified = await verifyOtp(email, otpCode);
+      if (verified) {
+        const loggedIn = await login(email, password);
+        if (loggedIn) {
+          // A failed display-name update shouldn't strand a user who is already logged in.
+          if (name.trim()) await setDisplayName(name.trim()).catch(() => {});
+          navigate("/explore");
+          return;
+        }
       }
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   }
 
   async function handleResend() {

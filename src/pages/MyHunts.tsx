@@ -30,7 +30,12 @@ export function MyHunts() {
 
   const inProgress = mine.filter((p) => p.status === "in_progress");
   const completed = mine.filter((p) => p.status === "completed");
-  const shown = tab === "in_progress" ? inProgress : completed;
+  // Only count runs whose hunt actually resolved — otherwise the tab counts disagree
+  // with the grid and an unresolvable run renders as blank space with no explanation.
+  const shown = (tab === "in_progress" ? inProgress : completed).flatMap((p) => {
+    const hunt = hunts.find((h) => h.id === p.huntId);
+    return hunt ? [{ participation: p, hunt }] : [];
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
@@ -57,11 +62,9 @@ export function MyHunts() {
       </div>
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {shown.map((p) => {
-          const hunt = hunts.find((h) => h.id === p.huntId);
-          if (!hunt) return null;
-          return <HuntCard key={p.id} hunt={hunt} />;
-        })}
+        {shown.map(({ participation, hunt }) => (
+          <HuntCard key={participation.id} hunt={hunt} />
+        ))}
         {shown.length === 0 && (
           <p className="col-span-full text-sm text-slate-400">Nothing here yet — head to Explore to start a hunt.</p>
         )}

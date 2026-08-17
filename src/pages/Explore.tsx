@@ -9,6 +9,7 @@ const FILTERS: Array<Difficulty | "all"> = ["all", "easy", "medium", "hard"];
 export function Explore() {
   const hunts = useHuntStore((s) => s.hunts);
   const loadingHunts = useHuntStore((s) => s.loadingHunts);
+  const huntsError = useHuntStore((s) => s.huntsError);
   const loadHunts = useHuntStore((s) => s.loadHunts);
   const [query, setQuery] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty | "all">("all");
@@ -64,9 +65,16 @@ export function Explore() {
         {loadingHunts && (
           <p className="col-span-full text-center text-sm text-slate-400">Loading hunts…</p>
         )}
-        {!loadingHunts &&
-          filtered.map((hunt) => <HuntCard key={hunt.id} hunt={hunt} />)}
-        {!loadingHunts && filtered.length === 0 && (
+        {!loadingHunts && huntsError && (
+          <div className="col-span-full rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-center">
+            <p className="text-sm text-rose-400">{huntsError}</p>
+            <button onClick={() => loadHunts()} className="mt-2 text-sm font-medium text-sky-400">
+              Retry
+            </button>
+          </div>
+        )}
+        {!loadingHunts && !huntsError && filtered.map((hunt) => <HuntCard key={hunt.id} hunt={hunt} />)}
+        {!loadingHunts && !huntsError && filtered.length === 0 && (
           <p className="col-span-full text-center text-sm text-slate-400">No hunts match your search.</p>
         )}
       </div>

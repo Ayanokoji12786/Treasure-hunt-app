@@ -94,6 +94,7 @@ interface HuntState {
   drafts: Hunt[];
   participations: Participation[];
   loadingHunts: boolean;
+  huntsError: string | null;
 
   loadHunts: () => Promise<void>;
   loadDrafts: () => void;
@@ -120,7 +121,7 @@ interface HuntState {
   startHunt: (huntId: string, userId: string) => Promise<Participation>;
 
   hintsUsedFor: (participationId: string) => number[];
-  useHint: (participationId: string, clueOrder: number) => void;
+  revealHint: (participationId: string, clueOrder: number) => void;
 
   submitVerification: (
     participationId: string,
@@ -136,15 +137,20 @@ export const useHuntStore = create<HuntState>((set, get) => ({
   drafts: storage.getDrafts(),
   participations: [],
   loadingHunts: false,
+  huntsError: null,
 
   loadHunts: async () => {
-    set({ loadingHunts: true });
+    set({ loadingHunts: true, huntsError: null });
     try {
       const rawHunts = (await base44.entities.Hunt.filter({ status: "active" })) as RawHunt[];
       const hunts = await Promise.all(
         rawHunts.map(async (h) => mapHunt(h, await fetchCluesForHunt(h.id))),
       );
       set({ hunts });
+    } catch (err) {
+      set({
+        huntsError: err instanceof Error ? err.message : "Couldn't load hunts. Please try again.",
+      });
     } finally {
       set({ loadingHunts: false });
     }
@@ -246,7 +252,7 @@ export const useHuntStore = create<HuntState>((set, get) => ({
 
   hintsUsedFor: (participationId) => storage.getHintsUsed()[participationId] ?? [],
 
-  useHint: (participationId, clueOrder) => {
+  revealHint: (participationId, clueOrder) => {
     const map = storage.getHintsUsed();
     const existing = map[participationId] ?? [];
     if (existing.includes(clueOrder)) return;
@@ -300,13 +306,25 @@ export const useHuntStore = create<HuntState>((set, get) => ({
   },
 
   importHunt: async (json, creatorId, creatorName) => {
-    const parsed = JSON.parse(json) as Hunt;
+    let parsed: Partial<Hunt>;
+    try {
+      parsed = JSON.parse(json) as Partial<Hunt>;
+    } catch {
+      throw new Error("That file isn't valid JSON.");
+    }
+    if (!parsed?.title?.trim() || !Array.isArray(parsed.clues) || parsed.clues.length === 0) {
+      throw new Error("That file doesn't look like an exported hunt (missing a title or clues).");
+    }
+    const difficulty = parsed.difficulty;
     return get().createHunt(
       {
         title: parsed.title,
-        description: parsed.description,
-        difficulty: parsed.difficulty,
-        coverImage: parsed.coverImage,
+        description: parsed.description ?? "",
+        difficulty:
+          difficulty === "easy" || difficulty === "medium" || difficulty === "hard"
+            ? difficulty
+            : "medium",
+        coverImage: parsed.coverImage ?? "",
         clues: parsed.clues,
         creatorId,
         creatorName,

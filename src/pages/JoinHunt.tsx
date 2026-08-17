@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Ticket } from "lucide-react";
 import { useHuntStore } from "../store/huntStore";
 
 export function JoinHunt() {
-  const [code, setCode] = useState("");
+  // Share links and QR codes point at /join?code=XXXXXX, so prefill from the URL.
+  const [searchParams] = useSearchParams();
+  const [code, setCode] = useState((searchParams.get("code") ?? "").toUpperCase());
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const getHuntByCode = useHuntStore((s) => s.getHuntByCode);
@@ -12,15 +14,24 @@ export function JoinHunt() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    const hunt = await getHuntByCode(code);
-    setSubmitting(false);
-    if (!hunt) {
-      setError("No hunt found with that code.");
+    if (!code.trim()) {
+      setError("Enter a hunt code to continue.");
       return;
     }
-    navigate(`/hunt/${hunt.id}`);
+    setSubmitting(true);
+    setError(null);
+    try {
+      const hunt = await getHuntByCode(code);
+      if (!hunt) {
+        setError("No hunt found with that code.");
+        return;
+      }
+      navigate(`/hunt/${hunt.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't look up that code. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
