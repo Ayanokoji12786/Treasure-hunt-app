@@ -28,7 +28,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   }, [restoreSession]);
 
   useEffect(() => {
-    if (currentUser) loadParticipations(currentUser.id);
+    // A failure here just leaves the list empty; startHunt re-checks the server before
+    // creating, so a player's existing progress is still picked up rather than duplicated.
+    if (currentUser) loadParticipations(currentUser.id).catch(() => {});
   }, [currentUser, loadParticipations]);
 
   if (loading) {

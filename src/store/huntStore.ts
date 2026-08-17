@@ -235,18 +235,45 @@ export const useHuntStore = create<HuntState>((set, get) => ({
   },
 
   startHunt: async (huntId, userId) => {
-    const existing = get().getParticipation(huntId, userId);
-    if (existing) return existing;
-    const raw = (await base44.entities.PlayerProgress.create({
-      hunt_id: huntId,
+    const cached = get().getParticipation(huntId, userId);
+    if (cached) return cached;
+
+    // The local list can be empty because loadParticipations hasn't run yet or failed,
+    // so confirm against the server before creating. Without this, a player whose
+    // progress simply hadn't loaded would get a second PlayerProgress row for the same
+    // hunt — resetting them to clue 1 and double-counting them on the leaderboard.
+    const existing = (await base44.entities.PlayerProgress.filter({
       player_id: userId,
-      status: "in_progress",
-      current_clue_order: 1,
-      completed_clues: 0,
-      scan_attempts: 0,
-    })) as RawProgress;
+      hunt_id: huntId,
+    })) as RawProgress[];
+
+    // Players who already accumulated duplicate rows from this bug keep their furthest
+    // progress rather than whichever row happens to come back first.
+    const furthest = existing.reduce<RawProgress | undefined>((best, p) => {
+      if (!best) return p;
+      if (p.status === "completed" && best.status !== "completed") return p;
+      if (best.status === "completed" && p.status !== "completed") return best;
+      return p.current_clue_order > best.current_clue_order ? p : best;
+    }, undefined);
+
+    const raw =
+      furthest ??
+      ((await base44.entities.PlayerProgress.create({
+        hunt_id: huntId,
+        player_id: userId,
+        status: "in_progress",
+        current_clue_order: 1,
+        completed_clues: 0,
+        scan_attempts: 0,
+      })) as RawProgress);
+
     const participation = mapParticipation(raw);
-    set({ participations: [...get().participations, participation] });
+    set({
+      participations: [
+        ...get().participations.filter((p) => p.id !== participation.id),
+        participation,
+      ],
+    });
     return participation;
   },
 
