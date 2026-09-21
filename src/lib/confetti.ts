@@ -5,6 +5,6 @@ export function celebrate() {
     particleCount: 120,
     spread: 80,
     origin: { y: 0.6 },
-    colors: ["#2f8f6c", "#52ac87", "#aee1c6", "#f5f4f0"],
+    colors: ["#c99a45", "#e7c879", "#54b889", "#f5f5f3"],
   });
 }

@@ -6,6 +6,7 @@ import { useAuthStore } from "../store/authStore";
 import { LocationSearch } from "../components/LocationSearch";
 import { GOOGLE_MAPS_API_KEY, GoogleMapsProvider } from "../lib/googleMaps";
 import { generateId } from "../lib/id";
+import { fileToDataUrl } from "../lib/file";
 import type { Clue, Difficulty } from "../types";
 
 function emptyClue(order: number): Clue {
@@ -21,15 +22,6 @@ function emptyClue(order: number): Clue {
 
 function MaybeGoogleMaps({ children }: { children: React.ReactNode }) {
   return GOOGLE_MAPS_API_KEY ? <GoogleMapsProvider>{children}</GoogleMapsProvider> : <>{children}</>;
-}
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 export function CreateHunt() {

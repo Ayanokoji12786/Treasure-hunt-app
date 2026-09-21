@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { NavBar } from "./components/NavBar";
 import { Protected } from "./components/Protected";
+import { LoadingScreen } from "./components/LoadingScreen";
+import { usePageLoader } from "./hooks/usePageLoader";
 import { useAuthStore } from "./store/authStore";
 import { useHuntStore } from "./store/huntStore";
 import { Landing } from "./pages/Landing";
@@ -22,6 +24,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const loading = useAuthStore((s) => s.loading);
   const restoreSession = useAuthStore((s) => s.restoreSession);
   const loadParticipations = useHuntStore((s) => s.loadParticipations);
+  const { loaderVisible, hideLoader } = usePageLoader();
 
   useEffect(() => {
     restoreSession();
@@ -33,12 +36,12 @@ function Shell({ children }: { children: React.ReactNode }) {
     if (currentUser) loadParticipations(currentUser.id).catch(() => {});
   }, [currentUser, loadParticipations]);
 
-  if (loading) {
-    return <div className="flex min-h-screen items-center justify-center text-slate-400">Loading…</div>;
+  if (loaderVisible) {
+    return <LoadingScreen active={loading} context="default" onDone={hideLoader} />;
   }
 
   return (
-    <div className="min-h-screen">
+    <div className={`min-h-screen ${currentUser ? "pb-20 sm:pb-0" : ""}`}>
       {currentUser && <NavBar />}
       {children}
     </div>

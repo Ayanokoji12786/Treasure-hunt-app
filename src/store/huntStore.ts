@@ -95,10 +95,13 @@ interface HuntState {
   participations: Participation[];
   loadingHunts: boolean;
   huntsError: string | null;
+  explorerCounts: Record<string, number>;
+  globalStats: { placesFound: number; explorers: number };
 
   loadHunts: () => Promise<void>;
   loadDrafts: () => void;
   loadParticipations: (userId: string) => Promise<void>;
+  loadExplorerCounts: () => Promise<void>;
 
   getHunt: (id: string) => Hunt | undefined;
   loadHuntById: (id: string) => Promise<Hunt | undefined>;
@@ -138,6 +141,8 @@ export const useHuntStore = create<HuntState>((set, get) => ({
   participations: [],
   loadingHunts: false,
   huntsError: null,
+  explorerCounts: {},
+  globalStats: { placesFound: 0, explorers: 0 },
 
   loadHunts: async () => {
     set({ loadingHunts: true, huntsError: null });
@@ -161,6 +166,31 @@ export const useHuntStore = create<HuntState>((set, get) => ({
   loadParticipations: async (userId) => {
     const raw = (await base44.entities.PlayerProgress.filter({ player_id: userId })) as RawProgress[];
     set({ participations: raw.map(mapParticipation) });
+  },
+
+  // Distinct-explorer counts per hunt (HuntCard's "N explorers" stat) plus sitewide
+  // totals (Landing's stats bar) from one shared fetch. Best-effort: a failure here
+  // just means those stats render blank, not a broken page.
+  loadExplorerCounts: async () => {
+    try {
+      const raw = (await base44.entities.PlayerProgress.list()) as RawProgress[];
+      const byHunt = new Map<string, Set<string>>();
+      const allPlayers = new Set<string>();
+      let placesFound = 0;
+      for (const p of raw) {
+        if (!byHunt.has(p.hunt_id)) byHunt.set(p.hunt_id, new Set());
+        byHunt.get(p.hunt_id)!.add(p.player_id);
+        allPlayers.add(p.player_id);
+        placesFound += p.completed_clues;
+      }
+      const counts: Record<string, number> = {};
+      byHunt.forEach((players, huntId) => {
+        counts[huntId] = players.size;
+      });
+      set({ explorerCounts: counts, globalStats: { placesFound, explorers: allPlayers.size } });
+    } catch {
+      // Non-critical — see comment above.
+    }
   },
 
   getHunt: (id) => get().hunts.find((h) => h.id === id) ?? get().drafts.find((h) => h.id === id),

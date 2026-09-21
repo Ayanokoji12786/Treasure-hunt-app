@@ -1,16 +1,15 @@
 import type { Difficulty } from "../types";
 
-const STYLES: Record<Difficulty, string> = {
-  easy: "bg-explorer-500/20 text-explorer-400 border-explorer-500/30",
-  medium: "bg-gold-500/20 text-gold-400 border-gold-500/30",
-  hard: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+const DOT: Record<Difficulty, string> = {
+  easy: "bg-explorer-500",
+  medium: "bg-gold-500",
+  hard: "bg-rose-400",
 };
 
 export function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium capitalize backdrop-blur ${STYLES[difficulty]}`}
-    >
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[var(--luma-raised)]/85 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-200 backdrop-blur-sm">
+      <span className={`h-1.5 w-1.5 rounded-full ${DOT[difficulty]}`} aria-hidden />
       {difficulty}
     </span>
   );
