@@ -106,6 +106,19 @@ export function Landing() {
             style={prefersReducedMotion ? undefined : { opacity: heroOpacity, transform: `translateY(${heroY}px)` }}
             className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center"
           >
+            {/* Soft scrim behind the hero copy only: the skyline behind the text is busy
+                enough to swallow the subhead. It lives inside the hero, so it fades out
+                with the text and leaves the city fully visible once you scroll. */}
+            {!prefersReducedMotion && (
+              <div
+                className="pointer-events-none absolute inset-0 -z-10"
+                style={{
+                  background:
+                    "radial-gradient(ellipse 58% 52% at 50% 54%, rgba(7,9,12,0.84) 0%, rgba(7,9,12,0.6) 45%, transparent 76%)",
+                }}
+                aria-hidden
+              />
+            )}
             {prefersReducedMotion ? (
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--luma-tertiary)] text-navy-950">
                 <Compass className="h-7 w-7" strokeWidth={2} />

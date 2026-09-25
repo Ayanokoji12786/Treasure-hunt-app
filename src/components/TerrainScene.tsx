@@ -1,7 +1,8 @@
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Edges, Line } from "@react-three/drei";
+import { Line } from "@react-three/drei";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { mapRange } from "../lib/mapRange";
 import { usePointerParallax } from "../hooks/usePointerParallax";
 
@@ -24,17 +25,6 @@ const WAYPOINTS = [
   { x: 4.5, z: -2.1 },
 ];
 const FINAL = WAYPOINTS[WAYPOINTS.length - 1];
-
-const BUILDINGS = [
-  { x: -3.2, z: -1.4, w: 0.5, d: 0.5, h: 1.1 },
-  { x: -2.2, z: 2.8, w: 0.7, d: 0.6, h: 0.7 },
-  { x: -0.6, z: -1.9, w: 0.55, d: 0.9, h: 1.5 },
-  { x: 0.2, z: 3.2, w: 0.6, d: 0.6, h: 0.9 },
-  { x: 1.8, z: 1.6, w: 0.5, d: 0.5, h: 1.8 },
-  { x: 3.2, z: 2.4, w: 0.65, d: 0.55, h: 0.6 },
-  { x: 3.6, z: -3.1, w: 0.55, d: 0.7, h: 1.3 },
-  { x: -4.8, z: -0.6, w: 0.5, d: 0.5, h: 0.8 },
-];
 
 // Camera choreography: overview -> descending toward the final waypoint, matching
 // the same 0.44-0.68 scroll band the old SVG sceneScale used.
@@ -100,6 +90,142 @@ function partialRoute(fraction: number): [number, number, number][] {
   return out;
 }
 
+// ---- Skyline ------------------------------------------------------------------
+// A Manhattan-style city: plain boxes on a street grid — low-rise blocks everywhere and
+// a few dense "downtowns" of towers. No windows or ornament, just massing. Two rules keep
+// the gold route untouched, and both are enforced when the city is generated rather than
+// left to chance:
+//   1. an open "avenue" — nothing is built within CLEARANCE of the route, and
+//   2. no building may rise high enough to hide any part of the route from any point on
+//      the camera's flight path (see heightCap).
+
+interface Building {
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+  h: number;
+}
+
+const CELL = 0.6;
+const CLEARANCE = 0.55;
+const SIGHT_MARGIN = 0.15;
+const CAMERA_KEEP_CLEAR = 1.25;
+const MIN_HEIGHT = 0.2;
+const MAX_HEIGHT = 3.3;
+
+const DOWNTOWNS = [
+  { x: -3.0, z: -2.5, r: 2.7, lift: 2.5 },
+  { x: 2.4, z: -3.6, r: 2.3, lift: 2.1 },
+  { x: -6.2, z: 1.0, r: 1.7, lift: 1.4 },
+  { x: 6.3, z: 2.4, r: 1.5, lift: 1.0 },
+];
+
+// Where the camera actually is over the part of the scroll where the route is visible.
+const CAMERA_SAMPLES = Array.from({ length: 11 }, (_, i) => {
+  const p = 0.08 + i * 0.06;
+  return { x: mapRange(p, CAM_PROGRESS, CAM_X), y: mapRange(p, CAM_PROGRESS, CAM_Y), z: mapRange(p, CAM_PROGRESS, CAM_Z) };
+});
+
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function distToRoute(x: number, z: number): number {
+  let best = Infinity;
+  for (let i = 0; i < ROUTE_POINTS.length - 1; i++) {
+    const [ax, , az] = ROUTE_POINTS[i];
+    const [bx, , bz] = ROUTE_POINTS[i + 1];
+    const abx = bx - ax;
+    const abz = bz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * abx + (z - az) * abz) / (abx * abx + abz * abz || 1)));
+    best = Math.min(best, Math.hypot(x - (ax + abx * t), z - (az + abz * t)));
+  }
+  return best;
+}
+
+/** The tallest a building on this footprint can be without hiding any part of the route
+ * from any camera position on the flight path. For every camera->route sightline that
+ * crosses the footprint, the top has to stay below the height the sightline passes at.
+ * Buildings right next to the camera are also capped so it never sits inside a tower. */
+function heightCap(x: number, z: number, w: number, d: number, ground: number): number {
+  const x0 = x - w / 2;
+  const x1 = x + w / 2;
+  const z0 = z - d / 2;
+  const z1 = z + d / 2;
+  let capTop = Infinity;
+  for (const cam of CAMERA_SAMPLES) {
+    if (Math.hypot(x - cam.x, z - cam.z) < CAMERA_KEEP_CLEAR) capTop = Math.min(capTop, cam.y - 0.4);
+    for (const r of ROUTE_POINTS) {
+      const dx = r[0] - cam.x;
+      const dz = r[2] - cam.z;
+      let t0 = 0;
+      let t1 = 1;
+      if (Math.abs(dx) < 1e-9) {
+        if (cam.x < x0 || cam.x > x1) continue;
+      } else {
+        const a = (x0 - cam.x) / dx;
+        const b = (x1 - cam.x) / dx;
+        t0 = Math.max(t0, Math.min(a, b));
+        t1 = Math.min(t1, Math.max(a, b));
+      }
+      if (Math.abs(dz) < 1e-9) {
+        if (cam.z < z0 || cam.z > z1) continue;
+      } else {
+        const a = (z0 - cam.z) / dz;
+        const b = (z1 - cam.z) / dz;
+        t0 = Math.max(t0, Math.min(a, b));
+        t1 = Math.min(t1, Math.max(a, b));
+      }
+      if (t0 > t1) continue;
+      // The sightline is straight, so its lowest point over the footprint is at an end.
+      const lowest = cam.y + (r[1] - cam.y) * (r[1] < cam.y ? t1 : t0);
+      capTop = Math.min(capTop, lowest - SIGHT_MARGIN);
+    }
+  }
+  return capTop - ground;
+}
+
+const SKYLINE: Building[] = (() => {
+  const rand = mulberry32(1969);
+  const out: Building[] = [];
+  for (let cx = -7.2; cx <= 7.2; cx += CELL) {
+    for (let cz = -4.8; cz <= 4.8; cz += CELL) {
+      // Every random number is drawn up front so the layout doesn't reshuffle when a
+      // rule below skips a cell.
+      const w = 0.26 + rand() * 0.24;
+      const d = 0.26 + rand() * 0.24;
+      const x = cx + (rand() - 0.5) * 0.04;
+      const z = cz + (rand() - 0.5) * 0.04;
+      const lot = rand();
+      const base = rand();
+      const mix = rand();
+      const spire = rand();
+
+      if (lot < 0.1) continue; // an empty lot
+      if (distToRoute(x, z) < CLEARANCE + Math.hypot(w, d) / 2) continue; // the avenue
+
+      let target = 0.22 + base * 0.32;
+      for (const c of DOWNTOWNS) {
+        const dist = Math.hypot(x - c.x, z - c.z);
+        target += c.lift * Math.exp(-((dist / c.r) ** 2)) * (0.55 + mix * 0.6);
+      }
+      if (spire > 0.95) target *= 1.35;
+
+      const h = Math.min(target, MAX_HEIGHT, heightCap(x, z, w, d, terrainHeight(x, z)));
+      if (h < MIN_HEIGHT) continue;
+      out.push({ x, z, w, d, h });
+    }
+  }
+  return out;
+})();
+
 function CameraRig({ progressRef }: { progressRef: React.RefObject<number> }) {
   const { camera } = useThree();
   const pos = useRef(new THREE.Vector3(CAM_X[0], CAM_Y[0], CAM_Z[0]));
@@ -155,25 +281,36 @@ function Terrain() {
 }
 
 function Buildings() {
+  // The whole city is one merged mesh plus one edge overlay — a mesh (and an <Edges>)
+  // per building would be hundreds of draw calls.
+  const { geometry, edges } = useMemo(() => {
+    const boxes = SKYLINE.map((b) => {
+      // Sunk 0.1 into the ground so a sloped site never leaves a gap under a corner.
+      const total = b.h + 0.1;
+      return new THREE.BoxGeometry(b.w, total, b.d).translate(b.x, terrainHeight(b.x, b.z) - 0.1 + total / 2, b.z);
+    });
+    const merged = mergeGeometries(boxes, false);
+    boxes.forEach((g) => g.dispose());
+    return { geometry: merged, edges: new THREE.EdgesGeometry(merged, 20) };
+  }, []);
+
   return (
     <group>
-      {BUILDINGS.map((b, i) => (
-        // Base sits on the ground at this spot (slightly embedded), not at world y=0.
-        <mesh key={i} position={[b.x, terrainHeight(b.x, b.z) + b.h / 2 - 0.03, b.z]}>
-          <boxGeometry args={[b.w, b.h, b.d]} />
-          {/* Deliberately lighter than the ground: on SURFACE-on-SURFACE the towers were
-              pure black silhouettes. A faint emissive lifts the unlit faces so every
-              side reads, and the brighter edge line traces the form. */}
-          <meshStandardMaterial
-            color={BUILDING}
-            emissive={BUILDING_GLOW}
-            emissiveIntensity={0.7}
-            metalness={0.25}
-            roughness={0.55}
-          />
-          <Edges color={BUILDING_EDGE} />
-        </mesh>
-      ))}
+      {/* Lighter than the ground: on SURFACE-on-SURFACE the towers were pure black
+          silhouettes. A faint emissive lifts the unlit faces so every side reads, and
+          the brighter edge line traces the form. */}
+      <mesh geometry={geometry}>
+        <meshStandardMaterial
+          color={BUILDING}
+          emissive={BUILDING_GLOW}
+          emissiveIntensity={0.7}
+          metalness={0.25}
+          roughness={0.55}
+        />
+      </mesh>
+      <lineSegments geometry={edges}>
+        <lineBasicMaterial color={BUILDING_EDGE} />
+      </lineSegments>
     </group>
   );
 }
