@@ -17,6 +17,7 @@ import { useHuntStore } from "../store/huntStore";
 import { useAuthStore } from "../store/authStore";
 import { DifficultyBadge } from "../components/DifficultyBadge";
 import { CameraVerification } from "../components/CameraVerification";
+import { PortalTransition } from "../components/PortalTransition";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { usePageLoader } from "../hooks/usePageLoader";
 import { celebrate } from "../lib/confetti";
@@ -122,6 +123,7 @@ export function HuntDetail() {
   const [geoError, setGeoError] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [showPortal, setShowPortal] = useState(false);
   const [totalDistanceKm, setTotalDistanceKm] = useState<number | null>(null);
   const celebratedRef = useRef(false);
   const { loaderVisible, hideLoader } = usePageLoader();
@@ -481,9 +483,19 @@ export function HuntDetail() {
           pointsOnSuccess={perCluePoints(hunt.difficulty, hintsUsed.includes(currentClue.order))}
           onCapture={(dataUrl) => submitVerification(participation.id, dataUrl)}
           onClose={() => setCameraOpen(false)}
-          onVerified={() => setCameraOpen(false)}
+          onVerified={(outcome) => {
+            setCameraOpen(false);
+            // The big confetti burst already covers hunt completion — the portal is
+            // specifically the "traveling to the next waypoint" beat, so it only
+            // plays when there's a next clue to travel to.
+            if (outcome.verified && !outcome.huntComplete) {
+              setShowPortal(true);
+              window.setTimeout(() => setShowPortal(false), 700);
+            }
+          }}
         />
       )}
+      <PortalTransition active={showPortal} />
     </div>
   );
 }

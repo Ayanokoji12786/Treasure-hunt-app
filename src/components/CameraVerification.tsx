@@ -50,15 +50,26 @@ export function CameraVerification({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    setPhoto(dataUrl);
     setPhase("analyzing");
     setChecklistStep(0);
-    const [result] = await Promise.all([onCapture(dataUrl), wait(MIN_ANALYSIS_MS)]);
-    setOutcome(result);
-    setPhase("result");
-    if (result.verified) {
-      window.setTimeout(() => onVerified(result), 1600);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setPhoto(dataUrl);
+      const [result] = await Promise.all([onCapture(dataUrl), wait(MIN_ANALYSIS_MS)]);
+      setOutcome(result);
+      setPhase("result");
+      if (result.verified) {
+        window.setTimeout(() => onVerified(result), 1600);
+      }
+    } catch (err) {
+      // A thrown submit (network drop, expired session) must land on the failure
+      // screen with a retry — not leave the overlay stuck on "Analyzing…" forever.
+      setOutcome({
+        verified: false,
+        reasoning: err instanceof Error ? err.message : "Verification failed. Please try again.",
+        huntComplete: false,
+      });
+      setPhase("result");
     }
   }
 
@@ -77,13 +88,26 @@ export function CameraVerification({
 
       <div className="relative flex flex-1 items-center justify-center overflow-hidden">
         {photo && (
-          <img
-            src={photo}
-            alt=""
-            className={`absolute inset-0 h-full w-full object-cover transition-[filter,opacity] duration-500 ${
-              phase === "analyzing" ? "opacity-60 blur-[1px]" : "opacity-35"
-            }`}
-          />
+          <>
+            {/* The player's own photo is the backdrop, but landmarks are photographed in
+                daylight — a bright photo under light text is unreadable. Darken the
+                image itself and add a vignette scrim so the overlay copy always has
+                contrast, whatever was captured. */}
+            <img
+              src={photo}
+              alt=""
+              className={`absolute inset-0 h-full w-full object-cover brightness-[0.4] saturate-[0.8] transition-[filter,opacity] duration-500 ${
+                phase === "analyzing" ? "opacity-100 blur-[1px]" : "opacity-70"
+              }`}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse at center, rgba(7,9,12,0.55) 0%, rgba(7,9,12,0.9) 100%)",
+              }}
+            />
+          </>
         )}
 
         <AnimatePresence mode="wait">

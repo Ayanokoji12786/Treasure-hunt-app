@@ -87,18 +87,23 @@ export function LoadingScreen({ active, context = "default", onDone }: LoadingSc
       aria-live="polite"
       aria-busy={phase !== "exiting"}
     >
-      {/* Faint 3D topographic floor grid */}
+      {/* Faint 3D topographic floor grid. The tilt lives on a plain wrapper, and only
+          the drift is animated on the child: Motion writes an inline `transform` for
+          `y`, which silently overrides any transform class on the same element — the
+          tilt used to be on the animated element and never applied. */}
       <div className="absolute inset-0 [perspective:500px]" aria-hidden>
-        <motion.div
-          className="absolute inset-x-[-60%] top-1/2 h-[220%] opacity-[0.14] [transform:rotateX(62deg)]"
-          style={{
-            backgroundImage:
-              "linear-gradient(var(--luma-border) 1px, transparent 1px), linear-gradient(90deg, var(--luma-border) 1px, transparent 1px)",
-            backgroundSize: "44px 44px",
-          }}
-          animate={{ y: [0, 44] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
-        />
+        <div className="absolute inset-x-[-60%] top-1/2 h-[220%] [transform:rotateX(62deg)]">
+          <motion.div
+            className="absolute inset-x-0 -top-[44px] bottom-0 opacity-[0.14]"
+            style={{
+              backgroundImage:
+                "linear-gradient(var(--luma-border) 1px, transparent 1px), linear-gradient(90deg, var(--luma-border) 1px, transparent 1px)",
+              backgroundSize: "44px 44px",
+            }}
+            animate={{ y: [0, 44] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
+          />
+        </div>
       </div>
       <div
         className="pointer-events-none absolute inset-0"
