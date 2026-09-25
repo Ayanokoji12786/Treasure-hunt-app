@@ -14,9 +14,12 @@ import { huntWaypointIcon, userLocationIcon } from "../lib/mapIcons";
 import type { Difficulty } from "../types";
 
 const FILTERS: Array<Difficulty | "all"> = ["all", "easy", "medium", "hard"];
-const DARK_TILE_URL = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const DARK_TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+// CARTO's free dark basemap started returning "API KEY REQUIRED" watermarked tiles, so
+// this uses the standard OpenStreetMap tiles (no key) and darkens them in CSS instead
+// — see .luma-dark-tiles in index.css.
+const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 type LatLng = { lat: number; lng: number };
 
@@ -109,7 +112,7 @@ export function Explore() {
 
       <div className="relative h-[55vh] w-full sm:h-[72vh]">
         <MapContainer center={[initialCenter.lat, initialCenter.lng]} zoom={initialZoom} className="h-full w-full" zoomControl={false}>
-          <TileLayer attribution={DARK_TILE_ATTRIBUTION} url={DARK_TILE_URL} />
+          <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} className="luma-dark-tiles" />
           <RecenterOnce center={initialCenter} zoom={initialZoom} />
           {userPos && (
             <Marker position={[userPos.lat, userPos.lng]} icon={userLocationIcon()} />

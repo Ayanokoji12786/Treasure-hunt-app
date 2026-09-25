@@ -249,6 +249,14 @@ body {
   animation: luma-gold-ring 900ms var(--ease-luma-narrative) 1;
 }
 
+/* Turns the standard light OpenStreetMap tiles into a dark basemap with no API key:
+   invert flips light-to-dark, hue-rotate puts water back to blue instead of orange,
+   and the last three settle it into the navy palette. Applied to the tile layer's
+   container only, so markers and overlays are unaffected. */
+.luma-dark-tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(0.78) contrast(0.92) saturate(0.35);
+}
+
 /* Map pins slightly rise on hover (DESIGN.md Motion — ambient list). The wrapping
    leaflet-assigned icon element owns positioning; this inner class owns the hover
    transform so the two never fight. */
